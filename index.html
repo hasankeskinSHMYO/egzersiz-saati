@@ -39,6 +39,7 @@
   #counterBtn .side { display: flex; flex-direction: column; align-items: center; min-width: 11vmin; }
   #counterBtn .side small, #counterBtn .mid small { font-size: 2.4vmin; opacity: .7; }
   #counterBtn .side b { font-size: 16vmin; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  #counterBtn .side.small b { font-size: 8vmin; color: #30d158; }
   #counterBtn .mid { display: flex; flex-direction: column; align-items: center; }
   #count { font-size: 10vmin; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
   #timerRow { font-size: 5vmin; font-weight: 600; font-variant-numeric: tabular-nums; color: #ffb000; }
@@ -58,6 +59,7 @@
     #clock { width: 52vw; height: 52vw; } #digital { font-size: 11vw; } #endAt { font-size: 4.2vw; }
     #cd { font-size: 24vw; } #phase { font-size: 4.4vw; } #info { font-size: 5vw; }
     #counterBtn { max-width: 92vw; } #counterBtn .side b { font-size: 22vw; } #counterBtn .side small, #counterBtn .mid small { font-size: 3vw; }
+    #counterBtn .side.small b { font-size: 10vw; }
     #counterBtn .side { min-width: 18vw; } #count { font-size: 14vw; } #timerRow { font-size: 7vw; } #timerRow small { font-size: 4vw; }
     button { font-size: 4.6vw; padding: 2vw 4.4vw; }
     #side { width: 92vw; max-height: none; overflow: visible; }
@@ -83,6 +85,7 @@
     <button id="counterBtn">
       <span class="mid"><b id="count">0</b><small>Dokun: tekrar say</small></span>
       <span class="side"><small>SET</small><b id="setNow">0</b></span>
+      <span class="side small"><small>YAPILAN SET</small><b id="doneNow">0</b></span>
     </button>
     <div id="timerRow"><small>Geçen süre</small><span id="timer">00:00</span></div>
   </div>
@@ -210,6 +213,8 @@ document.querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
 });
 
 /* ---------- Program: hareketler x setler ---------- */
+let doneSets = 0;
+function setDone(n) { doneSets = n; $('doneNow').textContent = n; }
 let segs = [], si = 0, run = false, paused = false, pausedLeftMs = 0, pausedElapsed = 0, segEnd = 0, lastShown = -1, t0 = 0, count = 0;
 
 function buildSegs() {
@@ -261,7 +266,7 @@ function setBtn() {
 $('startBtn').onclick = () => {
   ensureAudio(true); keepAwake();
   if (!run) {
-    segs = buildSegs(); si = 0; run = true; paused = false; t0 = Date.now(); setEndOnce();
+    segs = buildSegs(); si = 0; run = true; paused = false; t0 = Date.now(); setEndOnce(); setDone(0);
     applySeg(); beep(1200, 0.4);
   } else if (!paused) {
     paused = true; pausedLeftMs = Math.max(0, segEnd - Date.now()); pausedElapsed = Date.now() - t0;
@@ -273,7 +278,7 @@ $('startBtn').onclick = () => {
   setBtn();
 };
 $('resetBtn').onclick = () => {
-  run = false; paused = false; setBtn(); showIdle(); setCount(0); clearEnd();
+  run = false; paused = false; setBtn(); showIdle(); setCount(0); setDone(0); clearEnd();
 };
 
 function logic() {
@@ -289,6 +294,7 @@ function logic() {
     }
     $('timer').textContent = fmt(now - t0);
     if (now >= segEnd) {
+      if (g.type === 'work' && g.s === cfg.sets) setDone(g.m); // tum setler bitti: 1 set yapildi
       if (si >= segs.length - 1) {
         run = false; setRing(null);
         $('cd').className = ''; $('cd').textContent = 'Bitti'; $('phase').textContent = 'Egzersiz bitti';
