@@ -32,6 +32,8 @@
   #cd.rest { color: #0a84ff; } #cd.warn { color: #ff453a; }
   #phase { font-size: 3.6vmin; opacity: .85; text-align: center; }
   #info { font-size: 4vmin; font-weight: 600; color: #ffb000; }
+  #btnRow { display: flex; gap: 2vmin; }
+  button.pause { background: #b36b00; }
   #counterBtn { width: 100%; max-width: 46vw; background: #123a6b; border-radius: 5vmin; padding: .8vmin 2vmin; display: flex; align-items: center; justify-content: space-between; gap: 1vmin; }
   #counterBtn .side { display: flex; flex-direction: column; align-items: center; min-width: 11vmin; }
   #counterBtn .side small, #counterBtn .mid small { font-size: 2.4vmin; opacity: .7; }
@@ -75,11 +77,11 @@
     <div id="cd">20</div>
     <div id="phase">Hazır</div>
     <div id="info">Hareket <span id="moveNow">0</span> / <span id="moveTotal">7</span></div>
-    <button id="startBtn" class="go">Başlat</button>
+    <div id="btnRow"><button id="startBtn" class="go">Başlat</button><button id="resetBtn">Sıfırla</button></div>
     <button id="counterBtn">
       <span class="side"><small>SET</small><b id="setNow">0</b></span>
       <span class="mid"><b id="count">0</b><small>Dokun: tekrar say</small></span>
-      <span class="side"><small>TOPLAM</small><b id="setTotal">10</b></span>
+      <span class="side"><small>TOPLAM SET</small><b id="setTotal">10</b></span>
     </button>
     <div id="timerRow"><small>Geçen süre</small><span id="timer">00:00</span></div>
   </div>
@@ -189,7 +191,7 @@ document.querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
 });
 
 /* ---------- Program: hareketler x setler ---------- */
-let segs = [], si = 0, run = false, segEnd = 0, lastShown = -1, t0 = 0, count = 0;
+let segs = [], si = 0, run = false, paused = false, pausedLeftMs = 0, pausedElapsed = 0, segEnd = 0, lastShown = -1, t0 = 0, count = 0;
 
 function buildSegs() {
   const out = [];
@@ -228,28 +230,41 @@ function showIdle() {
 function updateEnd() {
   let remain;
   if (run) {
-    remain = Math.max(0, segEnd - Date.now()) / 1000;
+    remain = (paused ? pausedLeftMs : Math.max(0, segEnd - Date.now())) / 1000;
     for (let i = si + 1; i < segs.length; i++) remain += segs[i].dur;
   } else remain = totalSeconds();
   const e = new Date(Date.now() + remain * 1000);
   $('endTime').textContent = pad(e.getHours()) + ':' + pad(e.getMinutes()) + ':' + pad(e.getSeconds());
-  $('endAt').firstChild.textContent = run ? 'Planlanan bitiş' : 'Şimdi başlarsa biter';
+  $('endAt').firstChild.textContent = run ? (paused ? 'Duraklatıldı, devam ederse biter' : 'Planlanan bitiş') : 'Şimdi başlarsa biter';
 }
 
+function setBtn() {
+  const b = $('startBtn');
+  if (!run) { b.textContent = 'Başlat'; b.className = 'go'; }
+  else if (!paused) { b.textContent = 'Duraklat'; b.className = 'pause'; }
+  else { b.textContent = 'Devam'; b.className = 'go'; }
+}
 $('startBtn').onclick = () => {
   ensureAudio(); keepAwake();
   if (!run) {
-    segs = buildSegs(); si = 0; run = true; t0 = Date.now();
-    $('startBtn').textContent = 'Durdur'; $('startBtn').className = 'stop';
+    segs = buildSegs(); si = 0; run = true; paused = false; t0 = Date.now();
     applySeg(); beep(1200, 0.4);
+  } else if (!paused) {
+    paused = true; pausedLeftMs = Math.max(0, segEnd - Date.now()); pausedElapsed = Date.now() - t0;
+    beep(500, 0.2);
   } else {
-    run = false; $('startBtn').textContent = 'Başlat'; $('startBtn').className = 'go'; showIdle();
+    paused = false; segEnd = Date.now() + pausedLeftMs; t0 = Date.now() - pausedElapsed; lastShown = -1;
+    beep(900, 0.2);
   }
+  setBtn();
+};
+$('resetBtn').onclick = () => {
+  run = false; paused = false; setBtn(); showIdle(); setCount(0);
 };
 
 function logic() {
   const now = Date.now();
-  if (run) {
+  if (run && !paused) {
     const g = segs[si], leftMs = Math.max(0, segEnd - now), left = Math.ceil(leftMs / 1000);
     const warn = left <= 3 && left >= 1;
     setRing(leftMs / (g.dur * 1000), g.type === 'work' ? (warn ? '#ff453a' : '#30d158') : '#0a84ff');
@@ -263,7 +278,7 @@ function logic() {
       if (si >= segs.length - 1) {
         run = false; setRing(null);
         $('cd').className = ''; $('cd').textContent = 'Bitti'; $('phase').textContent = 'Egzersiz bitti';
-        $('startBtn').textContent = 'Başlat'; $('startBtn').className = 'go';
+        setBtn();
         beep(1200, 0.4); setTimeout(() => beep(1500, 0.4), 450); setTimeout(() => beep(1800, 0.7), 900);
       } else {
         const ended = g.type;
