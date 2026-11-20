@@ -34,7 +34,7 @@
   #info { font-size: 4vmin; font-weight: 600; color: #ffb000; }
   #btnRow { display: flex; gap: 2vmin; }
   button.pause { background: #b36b00; }
-  #counterBtn { width: 100%; max-width: 46vw; background: #123a6b; border-radius: 5vmin; padding: .8vmin 2vmin; display: flex; align-items: center; justify-content: space-between; gap: 1vmin; }
+  #counterBtn { width: 100%; max-width: 46vw; background: #123a6b; border-radius: 5vmin; padding: .8vmin 2vmin; display: flex; align-items: center; justify-content: space-around; gap: 1vmin; }
   #counterBtn .side { display: flex; flex-direction: column; align-items: center; min-width: 11vmin; }
   #counterBtn .side small, #counterBtn .mid small { font-size: 2.4vmin; opacity: .7; }
   #counterBtn .side b { font-size: 8vmin; line-height: 1.1; font-variant-numeric: tabular-nums; }
@@ -79,9 +79,8 @@
     <div id="info">Hareket <span id="moveNow">0</span> / <span id="moveTotal">7</span></div>
     <div id="btnRow"><button id="startBtn" class="go">Başlat</button><button id="resetBtn">Sıfırla</button></div>
     <button id="counterBtn">
-      <span class="side"><small>SET</small><b id="setNow">0</b></span>
       <span class="mid"><b id="count">0</b><small>Dokun: tekrar say</small></span>
-      <span class="side"><small>TOPLAM SET</small><b id="setTotal">10</b></span>
+      <span class="side"><small>SET</small><b id="setNow">0</b></span>
     </button>
     <div id="timerRow"><small>Geçen süre</small><span id="timer">00:00</span></div>
   </div>
@@ -181,7 +180,7 @@ const MIN = {work: 5, rest: 1, sets: 1, moves: 1, moveRest: 5};
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('egz-cfg') || '{}')); } catch (e) {}
 function showCfg() {
   for (const k in cfg) $('v_' + k).textContent = cfg[k];
-  $('setTotal').textContent = cfg.sets; $('moveTotal').textContent = cfg.moves;
+  $('moveTotal').textContent = cfg.moves;
   try { localStorage.setItem('egz-cfg', JSON.stringify(cfg)); } catch (e) {}
   if (!run) showIdle();
 }
@@ -227,16 +226,11 @@ function showIdle() {
   $('moveNow').textContent = 0; $('setNow').textContent = 0; setRing(null);
   $('timer').textContent = '00:00';
 }
-function updateEnd() {
-  let remain;
-  if (run) {
-    remain = (paused ? pausedLeftMs : Math.max(0, segEnd - Date.now())) / 1000;
-    for (let i = si + 1; i < segs.length; i++) remain += segs[i].dur;
-  } else remain = totalSeconds();
-  const e = new Date(Date.now() + remain * 1000);
+function setEndOnce() {
+  const e = new Date(Date.now() + totalSeconds() * 1000);
   $('endTime').textContent = pad(e.getHours()) + ':' + pad(e.getMinutes()) + ':' + pad(e.getSeconds());
-  $('endAt').firstChild.textContent = run ? (paused ? 'Duraklatıldı, devam ederse biter' : 'Planlanan bitiş') : 'Şimdi başlarsa biter';
 }
+function clearEnd() { $('endTime').textContent = '--:--'; }
 
 function setBtn() {
   const b = $('startBtn');
@@ -247,7 +241,7 @@ function setBtn() {
 $('startBtn').onclick = () => {
   ensureAudio(); keepAwake();
   if (!run) {
-    segs = buildSegs(); si = 0; run = true; paused = false; t0 = Date.now();
+    segs = buildSegs(); si = 0; run = true; paused = false; t0 = Date.now(); setEndOnce();
     applySeg(); beep(1200, 0.4);
   } else if (!paused) {
     paused = true; pausedLeftMs = Math.max(0, segEnd - Date.now()); pausedElapsed = Date.now() - t0;
@@ -259,7 +253,7 @@ $('startBtn').onclick = () => {
   setBtn();
 };
 $('resetBtn').onclick = () => {
-  run = false; paused = false; setBtn(); showIdle(); setCount(0);
+  run = false; paused = false; setBtn(); showIdle(); setCount(0); clearEnd();
 };
 
 function logic() {
@@ -288,7 +282,6 @@ function logic() {
       }
     }
   }
-  updateEnd();
 }
 function fmt(ms) { const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
   return (h ? pad(h) + ':' : '') + pad(m) + ':' + pad(s % 60); }
