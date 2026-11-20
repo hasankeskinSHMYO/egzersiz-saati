@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Egzersiz">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Egzersiz Saati</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+  html, body { margin: 0; height: 100%; background: #000; color: #fff; font-family: -apple-system, Helvetica, Arial, sans-serif; overflow: hidden; }
+  button { font-size: 3.6vmin; padding: 1.2vmin 2.6vmin; border-radius: 99px; border: 0; background: #222; color: #fff; }
+  button.go { background: #1f7a3a; } button.stop { background: #8a2222; }
+  svg { width: 100%; height: 100%; }
+  #app { position: absolute; inset: 0; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 2.5vmin;
+    padding: env(safe-area-inset-top) max(2vw, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 5vmin) max(2vw, env(safe-area-inset-left)); }
+
+  /* SOL: analog + dijital + planlanan bitis */
+  #left { flex: none; display: flex; flex-direction: column; align-items: center; gap: .8vmin; }
+  #clock { width: 44vmin; height: 44vmin; }
+  #digital { font-size: 9vmin; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+  #endAt { font-size: 3.4vmin; color: #ffb000; font-variant-numeric: tabular-nums; text-align: center; line-height: 1.2; }
+
+  /* ORTA */
+  #mid { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1.2vmin; }
+  #cd { font-size: 19vmin; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; color: #30d158; }
+  #cd.rest { color: #0a84ff; } #cd.warn { color: #ff453a; }
+  #phase { font-size: 3.6vmin; opacity: .85; text-align: center; }
+  #info { font-size: 4vmin; font-weight: 600; color: #ffb000; }
+  #counterBtn { width: 100%; max-width: 46vw; background: #123a6b; border-radius: 5vmin; padding: .8vmin 2vmin; display: flex; align-items: center; justify-content: space-between; gap: 1vmin; }
+  #counterBtn .side { display: flex; flex-direction: column; align-items: center; min-width: 11vmin; }
+  #counterBtn .side small, #counterBtn .mid small { font-size: 2.4vmin; opacity: .7; }
+  #counterBtn .side b { font-size: 8vmin; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  #counterBtn .mid { display: flex; flex-direction: column; align-items: center; }
+  #count { font-size: 15vmin; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  #timerRow { font-size: 5vmin; font-weight: 600; font-variant-numeric: tabular-nums; color: #ffb000; }
+  #timerRow small { font-size: 3vmin; opacity: .7; font-weight: 400; margin-right: 1vmin; }
+
+  /* SAG: ayarlar */
+  #side { flex: none; display: flex; flex-direction: column; gap: .9vmin; max-height: 100%; overflow-y: auto; padding: 1vmin 0; }
+  .adj { display: flex; align-items: center; justify-content: space-between; gap: 1vmin; font-size: 3vmin; }
+  .adj span { opacity: .9; min-width: 24vmin; text-align: center; }
+  .adj button { font-size: 3.6vmin; padding: .6vmin 2vmin; }
+
+  #brand { position: absolute; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 1vmin); text-align: center;
+    font-size: 3vmin; font-weight: 700; letter-spacing: .3vmin; color: #0a84ff; }
+
+  @media (orientation: portrait) {
+    #app { flex-direction: column; justify-content: flex-start; gap: 1.5vh; padding-top: calc(env(safe-area-inset-top) + 4vh); padding-bottom: 7vh; overflow-y: auto; }
+    #clock { width: 52vw; height: 52vw; } #digital { font-size: 11vw; } #endAt { font-size: 4.2vw; }
+    #cd { font-size: 24vw; } #phase { font-size: 4.4vw; } #info { font-size: 5vw; }
+    #counterBtn { max-width: 92vw; } #counterBtn .side b { font-size: 10vw; } #counterBtn .side small, #counterBtn .mid small { font-size: 3vw; }
+    #counterBtn .side { min-width: 18vw; } #count { font-size: 20vw; } #timerRow { font-size: 7vw; } #timerRow small { font-size: 4vw; }
+    button { font-size: 4.6vw; padding: 2vw 4.4vw; }
+    #side { width: 92vw; max-height: none; overflow: visible; }
+    .adj { font-size: 4vw; } .adj span { min-width: 38vw; } .adj button { font-size: 5vw; padding: 1.2vw 3.6vw; }
+    #brand { font-size: 3.8vw; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="left">
+    <div id="clock"></div>
+    <div id="digital">00:00:00</div>
+    <div id="endAt">Planlanan bitiş<br><b id="endTime">--:--</b></div>
+  </div>
+
+  <div id="mid">
+    <div id="cd">20</div>
+    <div id="phase">Hazır</div>
+    <div id="info">Hareket <span id="moveNow">0</span> / <span id="moveTotal">7</span></div>
+    <button id="startBtn" class="go">Başlat</button>
+    <button id="counterBtn">
+      <span class="side"><small>SET</small><b id="setNow">0</b></span>
+      <span class="mid"><b id="count">0</b><small>Dokun: tekrar say</small></span>
+      <span class="side"><small>TOPLAM</small><b id="setTotal">10</b></span>
+    </button>
+    <div id="timerRow"><small>Geçen süre</small><span id="timer">00:00</span></div>
+  </div>
+
+  <div id="side">
+    <div class="adj"><button data-k="work" data-d="-5">− 5</button><span>Egzersiz: <b id="v_work"></b> sn</span><button data-k="work" data-d="5">+ 5</button></div>
+    <div class="adj"><button data-k="rest" data-d="-1">− 1</button><span>Mola: <b id="v_rest"></b> sn</span><button data-k="rest" data-d="1">+ 1</button></div>
+    <div class="adj"><button data-k="sets" data-d="-1">− 1</button><span>Set: <b id="v_sets"></b></span><button data-k="sets" data-d="1">+ 1</button></div>
+    <div class="adj"><button data-k="moves" data-d="-1">− 1</button><span>Hareket: <b id="v_moves"></b></span><button data-k="moves" data-d="1">+ 1</button></div>
+    <div class="adj"><button data-k="moveRest" data-d="-5">− 5</button><span>Hareket arası: <b id="v_moveRest"></b> sn</span><button data-k="moveRest" data-d="5">+ 5</button></div>
+    <button id="zeroBtn">Sayıyı sıfırla</button>
+    <button id="soundBtn" class="go">Ses: açık</button>
+  </div>
+  <div id="brand">Hasan Keskin Egzersiz Saati</div>
+</div>
+
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+
+/* ---------- Analog kadran ---------- */
+function makeClock(container) {
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '-100 -100 200 200');
+  const add = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]); (parent || svg).appendChild(e); return e; };
+  add('circle', {r: 96, fill: '#0b0b0b', stroke: '#444', 'stroke-width': 2});
+  const ring = add('circle', {r: 98, fill: 'none', stroke: '#30d158', 'stroke-width': 4, 'stroke-linecap': 'round',
+    transform: 'rotate(-90)', 'stroke-dasharray': '0 1000', opacity: 0});
+  for (let i = 0; i < 60; i++) {
+    const a = i * 6 * Math.PI / 180, big = i % 5 === 0, r1 = big ? 80 : 86, r2 = 92;
+    add('line', {x1: Math.sin(a)*r1, y1: -Math.cos(a)*r1, x2: Math.sin(a)*r2, y2: -Math.cos(a)*r2, stroke: big ? '#fff' : '#777', 'stroke-width': big ? 2.4 : 1});
+  }
+  for (let n = 1; n <= 12; n++) {
+    const a = n * 30 * Math.PI / 180;
+    const t = add('text', {x: Math.sin(a)*66, y: -Math.cos(a)*66, fill: '#fff', 'font-size': 13, 'text-anchor': 'middle', 'dominant-baseline': 'central'});
+    t.textContent = n;
+  }
+  const hh = add('line', {x1: 0, y1: 6, x2: 0, y2: -48, stroke: '#fff', 'stroke-width': 5, 'stroke-linecap': 'round'});
+  const mm = add('line', {x1: 0, y1: 8, x2: 0, y2: -72, stroke: '#fff', 'stroke-width': 3.5, 'stroke-linecap': 'round'});
+  const ss = add('g', {});
+  add('line', {x1: 0, y1: 18, x2: 0, y2: -82, stroke: '#ff9500', 'stroke-width': 1.8, 'stroke-linecap': 'round'}, ss);
+  add('circle', {r: 3.5, fill: '#ff9500'}, ss);
+  add('circle', {r: 1.6, fill: '#000'});
+  container.appendChild(svg);
+  return {hh, mm, ss, ring};
+}
+const clock = makeClock($('clock'));
+const RING_LEN = 2 * Math.PI * 98;
+function setRing(frac, color) {
+  clock.ring.setAttribute('opacity', frac === null ? 0 : 1);
+  if (frac !== null) { clock.ring.setAttribute('stroke-dasharray', (RING_LEN * frac) + ' ' + RING_LEN); clock.ring.setAttribute('stroke', color); }
+}
+
+/* ---------- Ses: sadece Web Audio (bip). Konusma yok, mikrofon yok => ses kesilmez ---------- */
+let soundOn = true, ac = null;
+function ensureAudio() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) {} // muzikle birlikte calsin
+  try {
+    if (!ac || ac.state === 'closed') {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      ac.onstatechange = () => { if (ac && ac.state !== 'running' && ac.state !== 'closed') ac.resume().catch(() => {}); };
+      // sessiz surekli osilator: ses oturumunu canli tutar
+      const o = ac.createOscillator(), g = ac.createGain();
+      g.gain.value = 0.00001; o.connect(g); g.connect(ac.destination); o.start();
+    }
+    if (ac.state !== 'running') ac.resume().catch(() => {});
+  } catch (e) {}
+}
+function beep(freq, dur, vol) {
+  if (!soundOn) return;
+  ensureAudio();
+  try {
+    const t = ac.currentTime + 0.02, o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol || 0.6, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + dur + 0.05);
+  } catch (e) {}
+}
+['touchstart', 'pointerdown', 'click'].forEach(ev => document.addEventListener(ev, ensureAudio, {passive: true}));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { ensureAudio(); keepAwake(); } });
+setInterval(() => { if (ac && ac.state !== 'running') ensureAudio(); }, 2000);
+
+$('soundBtn').onclick = () => {
+  soundOn = !soundOn;
+  $('soundBtn').textContent = soundOn ? 'Ses: açık' : 'Ses: kapalı';
+  $('soundBtn').className = soundOn ? 'go' : '';
+  if (soundOn) beep(880, 0.15);
+};
+
+/* ---------- Ayarlar ---------- */
+let cfg = {work: 20, rest: 10, sets: 10, moves: 7, moveRest: 30};
+const MIN = {work: 5, rest: 1, sets: 1, moves: 1, moveRest: 5};
+try { Object.assign(cfg, JSON.parse(localStorage.getItem('egz-cfg') || '{}')); } catch (e) {}
+function showCfg() {
+  for (const k in cfg) $('v_' + k).textContent = cfg[k];
+  $('setTotal').textContent = cfg.sets; $('moveTotal').textContent = cfg.moves;
+  try { localStorage.setItem('egz-cfg', JSON.stringify(cfg)); } catch (e) {}
+  if (!run) showIdle();
+}
+document.querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
+  if (run) return;
+  const k = b.dataset.k; cfg[k] = Math.max(MIN[k], cfg[k] + Number(b.dataset.d)); showCfg();
+});
+
+/* ---------- Program: hareketler x setler ---------- */
+let segs = [], si = 0, run = false, segEnd = 0, lastShown = -1, t0 = 0, count = 0;
+
+function buildSegs() {
+  const out = [];
+  for (let m = 1; m <= cfg.moves; m++) {
+    for (let s = 1; s <= cfg.sets; s++) {
+      out.push({type: 'work', dur: cfg.work, m, s});
+      const lastSet = s === cfg.sets, lastMove = m === cfg.moves;
+      if (lastSet && lastMove) break;
+      if (lastSet) out.push({type: 'moveRest', dur: cfg.moveRest, m, s});
+      else out.push({type: 'rest', dur: cfg.rest, m, s});
+    }
+  }
+  return out;
+}
+function totalSeconds() { return buildSegs().reduce((a, g) => a + g.dur, 0); }
+
+function setCount(n) { count = n; $('count').textContent = n; }
+$('counterBtn').onclick = () => { setCount(count + 1); beep(1000, 0.05, 0.4); };
+$('zeroBtn').onclick = () => setCount(0);
+
+function applySeg() {
+  const g = segs[si];
+  segEnd = Date.now() + g.dur * 1000; lastShown = -1;
+  const cd = $('cd'); cd.className = g.type === 'work' ? '' : 'rest';
+  const nextMove = g.type === 'moveRest' ? g.m + 1 : g.m;
+  $('moveNow').textContent = nextMove;
+  if (g.type === 'work') { $('phase').textContent = 'Egzersiz'; $('setNow').textContent = g.s; setCount(0); }
+  else if (g.type === 'rest') { $('phase').textContent = 'Mola'; }
+  else { $('phase').textContent = 'Hareket arası — sonraki hareket'; $('setNow').textContent = 0; }
+}
+function showIdle() {
+  $('cd').className = ''; $('cd').textContent = cfg.work; $('phase').textContent = 'Hazır';
+  $('moveNow').textContent = 0; $('setNow').textContent = 0; setRing(null);
+  $('timer').textContent = '00:00';
+}
+function updateEnd() {
+  let remain;
+  if (run) {
+    remain = Math.max(0, segEnd - Date.now()) / 1000;
+    for (let i = si + 1; i < segs.length; i++) remain += segs[i].dur;
+  } else remain = totalSeconds();
+  const e = new Date(Date.now() + remain * 1000);
+  $('endTime').textContent = pad(e.getHours()) + ':' + pad(e.getMinutes()) + ':' + pad(e.getSeconds());
+  $('endAt').firstChild.textContent = run ? 'Planlanan bitiş' : 'Şimdi başlarsa biter';
+}
+
+$('startBtn').onclick = () => {
+  ensureAudio(); keepAwake();
+  if (!run) {
+    segs = buildSegs(); si = 0; run = true; t0 = Date.now();
+    $('startBtn').textContent = 'Durdur'; $('startBtn').className = 'stop';
+    applySeg(); beep(1200, 0.4);
+  } else {
+    run = false; $('startBtn').textContent = 'Başlat'; $('startBtn').className = 'go'; showIdle();
+  }
+};
+
+function logic() {
+  const now = Date.now();
+  if (run) {
+    const g = segs[si], leftMs = Math.max(0, segEnd - now), left = Math.ceil(leftMs / 1000);
+    const warn = left <= 3 && left >= 1;
+    setRing(leftMs / (g.dur * 1000), g.type === 'work' ? (warn ? '#ff453a' : '#30d158') : '#0a84ff');
+    if (left !== lastShown) {
+      lastShown = left; $('cd').textContent = left;
+      $('cd').classList.toggle('warn', warn);
+      if (warn) beep(g.type === 'work' ? 880 : 660, 0.14); // son 3 saniye: her saniye bip (egzersiz ve mola)
+    }
+    $('timer').textContent = fmt(now - t0);
+    if (now >= segEnd) {
+      if (si >= segs.length - 1) {
+        run = false; setRing(null);
+        $('cd').className = ''; $('cd').textContent = 'Bitti'; $('phase').textContent = 'Egzersiz bitti';
+        $('startBtn').textContent = 'Başlat'; $('startBtn').className = 'go';
+        beep(1200, 0.4); setTimeout(() => beep(1500, 0.4), 450); setTimeout(() => beep(1800, 0.7), 900);
+      } else {
+        const ended = g.type;
+        si++; applySeg();
+        if (ended === 'work') beep(1200, 0.6);      // egzersiz bitti: uzun bip
+        else { beep(1500, 0.25); setTimeout(() => beep(1500, 0.25), 300); } // mola bitti: cift bip, basla
+      }
+    }
+  }
+  updateEnd();
+}
+function fmt(ms) { const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  return (h ? pad(h) + ':' : '') + pad(m) + ':' + pad(s % 60); }
+setInterval(logic, 100); // ekran gorunmese de calissin diye interval
+
+/* ---------- Saat ---------- */
+function frame() {
+  const d = new Date(), s = d.getSeconds() + d.getMilliseconds() / 1000, m = d.getMinutes() + s / 60, h = (d.getHours() % 12) + m / 60;
+  clock.ss.setAttribute('transform', 'rotate(' + s * 6 + ')');
+  clock.mm.setAttribute('transform', 'rotate(' + m * 6 + ')');
+  clock.hh.setAttribute('transform', 'rotate(' + h * 30 + ')');
+  $('digital').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  requestAnimationFrame(frame);
+}
+frame();
+
+/* ---------- Ekran uyanik kalsin ---------- */
+let wakeLock = null;
+async function keepAwake() {
+  try { if ('wakeLock' in navigator && (!wakeLock || wakeLock.released)) {
+    wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch (e) {}
+}
+keepAwake(); setInterval(keepAwake, 5000);
+
+showCfg();
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+</script>
+</body>
+</html>
