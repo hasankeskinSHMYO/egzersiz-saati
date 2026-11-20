@@ -31,15 +31,16 @@
   #cd { font-size: 19vmin; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; color: #30d158; }
   #cd.rest { color: #0a84ff; } #cd.warn { color: #ff453a; }
   #phase { font-size: 3.6vmin; opacity: .85; text-align: center; }
+  #audioWarn { display: none; background: #8a2222; border-radius: 99px; padding: .6vmin 2.4vmin; font-size: 3vmin; }
   #info { font-size: 4vmin; font-weight: 600; color: #ffb000; }
   #btnRow { display: flex; gap: 2vmin; }
   button.pause { background: #b36b00; }
   #counterBtn { width: 100%; max-width: 46vw; background: #123a6b; border-radius: 5vmin; padding: .8vmin 2vmin; display: flex; align-items: center; justify-content: space-around; gap: 1vmin; }
   #counterBtn .side { display: flex; flex-direction: column; align-items: center; min-width: 11vmin; }
   #counterBtn .side small, #counterBtn .mid small { font-size: 2.4vmin; opacity: .7; }
-  #counterBtn .side b { font-size: 8vmin; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  #counterBtn .side b { font-size: 16vmin; line-height: 1.1; font-variant-numeric: tabular-nums; }
   #counterBtn .mid { display: flex; flex-direction: column; align-items: center; }
-  #count { font-size: 15vmin; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  #count { font-size: 10vmin; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
   #timerRow { font-size: 5vmin; font-weight: 600; font-variant-numeric: tabular-nums; color: #ffb000; }
   #timerRow small { font-size: 3vmin; opacity: .7; font-weight: 400; margin-right: 1vmin; }
 
@@ -56,8 +57,8 @@
     #app { flex-direction: column; justify-content: flex-start; gap: 1.5vh; padding-top: calc(env(safe-area-inset-top) + 4vh); padding-bottom: 7vh; overflow-y: auto; }
     #clock { width: 52vw; height: 52vw; } #digital { font-size: 11vw; } #endAt { font-size: 4.2vw; }
     #cd { font-size: 24vw; } #phase { font-size: 4.4vw; } #info { font-size: 5vw; }
-    #counterBtn { max-width: 92vw; } #counterBtn .side b { font-size: 10vw; } #counterBtn .side small, #counterBtn .mid small { font-size: 3vw; }
-    #counterBtn .side { min-width: 18vw; } #count { font-size: 20vw; } #timerRow { font-size: 7vw; } #timerRow small { font-size: 4vw; }
+    #counterBtn { max-width: 92vw; } #counterBtn .side b { font-size: 22vw; } #counterBtn .side small, #counterBtn .mid small { font-size: 3vw; }
+    #counterBtn .side { min-width: 18vw; } #count { font-size: 14vw; } #timerRow { font-size: 7vw; } #timerRow small { font-size: 4vw; }
     button { font-size: 4.6vw; padding: 2vw 4.4vw; }
     #side { width: 92vw; max-height: none; overflow: visible; }
     .adj { font-size: 4vw; } .adj span { min-width: 38vw; } .adj button { font-size: 5vw; padding: 1.2vw 3.6vw; }
@@ -76,6 +77,7 @@
   <div id="mid">
     <div id="cd">20</div>
     <div id="phase">Hazır</div>
+    <div id="audioWarn">Ses kesildi: ekrana bir kez dokun</div>
     <div id="info">Hareket <span id="moveNow">0</span> / <span id="moveTotal">7</span></div>
     <div id="btnRow"><button id="startBtn" class="go">Başlat</button><button id="resetBtn">Sıfırla</button></div>
     <button id="counterBtn">
@@ -137,23 +139,37 @@ function setRing(frac, color) {
 }
 
 /* ---------- Ses: sadece Web Audio (bip). Konusma yok, mikrofon yok => ses kesilmez ---------- */
-let soundOn = true, ac = null;
-function ensureAudio() {
+let soundOn = true, ac = null, lastRebuild = 0;
+function buildAudio() {
+  try { if (ac) ac.close().catch(() => {}); } catch (e) {}
+  ac = new (window.AudioContext || window.webkitAudioContext)();
+  const me = ac;
+  // alarm/arama gibi kesintilerden sonra kendiliginden geri donmeyi dene
+  me.onstatechange = () => { if (ac === me && me.state !== 'running' && me.state !== 'closed') me.resume().catch(() => {}); };
+  // sessiz surekli osilator: ses oturumunu canli tutar
+  const o = me.createOscillator(), g = me.createGain();
+  g.gain.value = 0.00001; o.connect(g); g.connect(me.destination); o.start();
+  lastRebuild = Date.now();
+}
+function ensureAudio(gesture) {
   try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) {} // muzikle birlikte calsin
   try {
-    if (!ac || ac.state === 'closed') {
-      ac = new (window.AudioContext || window.webkitAudioContext)();
-      ac.onstatechange = () => { if (ac && ac.state !== 'running' && ac.state !== 'closed') ac.resume().catch(() => {}); };
-      // sessiz surekli osilator: ses oturumunu canli tutar
-      const o = ac.createOscillator(), g = ac.createGain();
-      g.gain.value = 0.00001; o.connect(g); g.connect(ac.destination); o.start();
+    if (!ac || ac.state === 'closed') buildAudio();
+    if (ac.state !== 'running') {
+      ac.resume().catch(() => {});
+      // dokunusla geri getirme: resume islemezse (alarm sonrasi 'interrupted') sesi bastan kur
+      if (gesture) {
+        const c = ac;
+        setTimeout(() => {
+          if (ac === c && c.state !== 'running' && Date.now() - lastRebuild > 1200) { buildAudio(); ac.resume().catch(() => {}); }
+        }, 350);
+      }
     }
-    if (ac.state !== 'running') ac.resume().catch(() => {});
   } catch (e) {}
 }
 function beep(freq, dur, vol) {
   if (!soundOn) return;
-  ensureAudio();
+  ensureAudio(false);
   try {
     const t = ac.currentTime + 0.02, o = ac.createOscillator(), g = ac.createGain();
     o.type = 'sine'; o.frequency.value = freq;
@@ -163,9 +179,13 @@ function beep(freq, dur, vol) {
     o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + dur + 0.05);
   } catch (e) {}
 }
-['touchstart', 'pointerdown', 'click'].forEach(ev => document.addEventListener(ev, ensureAudio, {passive: true}));
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { ensureAudio(); keepAwake(); } });
-setInterval(() => { if (ac && ac.state !== 'running') ensureAudio(); }, 2000);
+['touchstart', 'touchend', 'pointerdown', 'click'].forEach(ev => document.addEventListener(ev, () => ensureAudio(true), {passive: true}));
+['focus', 'pageshow'].forEach(ev => window.addEventListener(ev, () => ensureAudio(false)));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { ensureAudio(false); keepAwake(); } });
+setInterval(() => {
+  if (ac && ac.state !== 'running') ensureAudio(false);
+  $('audioWarn').style.display = (soundOn && run && !paused && ac && ac.state !== 'running') ? 'block' : 'none';
+}, 1000);
 
 $('soundBtn').onclick = () => {
   soundOn = !soundOn;
@@ -239,7 +259,7 @@ function setBtn() {
   else { b.textContent = 'Devam'; b.className = 'go'; }
 }
 $('startBtn').onclick = () => {
-  ensureAudio(); keepAwake();
+  ensureAudio(true); keepAwake();
   if (!run) {
     segs = buildSegs(); si = 0; run = true; paused = false; t0 = Date.now(); setEndOnce();
     applySeg(); beep(1200, 0.4);
