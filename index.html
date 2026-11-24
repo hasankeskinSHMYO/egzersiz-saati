@@ -7,15 +7,15 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Egzersiz">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#0b1220">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>Egzersiz Saati</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
-  html, body { margin: 0; height: 100%; background: #000; color: #fff; font-family: -apple-system, Helvetica, Arial, sans-serif; overflow: hidden; }
-  button { font-size: 3.6vmin; padding: 1.2vmin 2.6vmin; border-radius: 99px; border: 0; background: #222; color: #fff; }
-  button.go { background: #1f7a3a; } button.stop { background: #8a2222; }
+  html, body { margin: 0; height: 100%; background: #0b1220; background-image: linear-gradient(160deg, #0b1220 0%, #16213a 100%); color: #e8eefc; font-family: -apple-system, Helvetica, Arial, sans-serif; overflow: hidden; }
+  button { font-size: 3.6vmin; padding: 1.2vmin 2.6vmin; border-radius: 99px; border: 0; background: #1e293b; color: #fff; }
+  button.go { background: #0f766e; } button.stop { background: #9f1d36; }
   svg { width: 100%; height: 100%; }
   #app { position: absolute; inset: 0; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 2.5vmin;
     padding: env(safe-area-inset-top) max(2vw, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 5vmin) max(2vw, env(safe-area-inset-left)); }
@@ -23,25 +23,26 @@
   /* SOL: analog + dijital + planlanan bitis */
   #left { flex: none; display: flex; flex-direction: column; align-items: center; gap: .8vmin; }
   #clock { width: 46vmin; height: 46vmin; }
-  #wx { font-size: 3vmin; opacity: .8; text-align: center; min-height: 3.6vmin; }
-  #endAt { font-size: 3.4vmin; color: #ffb000; font-variant-numeric: tabular-nums; text-align: center; line-height: 1.2; }
+  #wx { align-self: flex-start; text-align: left; font-size: 3.4vmin; line-height: 1.25; min-height: 8vmin; color: #cbd5e1; } #wx b { display: block; font-size: 4.6vmin; color: #fff; font-weight: 600; }
 
   /* ORTA */
   #mid { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1.2vmin; }
-  #cd { font-size: 19vmin; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; color: #30d158; }
-  #cd.rest { color: #0a84ff; } #cd.warn { color: #ff453a; } #cd.warnRest { color: #ffd60a; }
+  #cd { font-size: 19vmin; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; color: #5eead4; }
+  #cd.rest { color: #7dd3fc; } #cd.warn { color: #fb7185; } #cd.warnRest { color: #fbbf24; }
   #phase { font-size: 3.6vmin; opacity: .85; text-align: center; }
-  #audioWarn { display: none; background: #8a2222; border-radius: 99px; padding: .6vmin 2.4vmin; font-size: 3vmin; }
-  #info { font-size: 4vmin; font-weight: 600; color: #ffb000; }
+  #audioWarn { display: none; background: #9f1d36; border-radius: 99px; padding: .6vmin 2.4vmin; font-size: 3vmin; }
+  #info { font-size: 4vmin; font-weight: 600; color: #fcd34d; }
   #btnRow { display: flex; gap: 2vmin; }
-  button.pause { background: #b36b00; }
-  #stats { width: 100%; max-width: 46vw; background: #123a6b; border-radius: 5vmin; padding: .8vmin 2vmin; display: flex; align-items: center; justify-content: space-around; gap: 1vmin; }
+  button.pause { background: #b45309; }
+  #stats { width: 100%; max-width: 46vw; background: rgba(148,163,184,.14); border-radius: 5vmin; padding: .8vmin 2vmin; display: flex; align-items: center; justify-content: space-around; gap: 1vmin; }
   #stats .side { display: flex; flex-direction: column; align-items: center; min-width: 11vmin; }
   #stats .side small { font-size: 2.4vmin; opacity: .7; }
   #stats .side b { font-size: 16vmin; line-height: 1.1; font-variant-numeric: tabular-nums; }
-  #stats .side.small b { font-size: 8vmin; color: #30d158; }
-  #timerRow { font-size: 5vmin; font-weight: 600; font-variant-numeric: tabular-nums; color: #ffb000; }
-  #timerRow small { font-size: 3vmin; opacity: .7; font-weight: 400; margin-right: 1vmin; }
+  #stats .side.small b { font-size: 8vmin; color: #5eead4; }
+  #timerRow { display: flex; flex-wrap: wrap; justify-content: center; column-gap: 3.4vmin; row-gap: .4vmin; font-variant-numeric: tabular-nums; }
+  #timerRow .tr { display: inline-flex; align-items: baseline; gap: 1vmin; white-space: nowrap; }
+  #timerRow small { font-size: 3vmin; opacity: .75; font-weight: 400; color: #cbd5e1; }
+  #timerRow b { font-size: 5vmin; font-weight: 600; color: #fcd34d; }
 
   /* SAG: ayarlar */
   #side { flex: none; display: flex; flex-direction: column; gap: .9vmin; max-height: 100%; overflow-y: auto; padding: 1vmin 0; }
@@ -49,29 +50,25 @@
   .adj span { opacity: .9; min-width: 24vmin; text-align: center; }
   .adj button { font-size: 3.6vmin; padding: .6vmin 2vmin; }
 
-  #brand { position: absolute; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 1vmin); text-align: center;
-    font-size: 3vmin; font-weight: 700; letter-spacing: .3vmin; color: #0a84ff; }
 
   @media (orientation: portrait) {
     #app { flex-direction: column; justify-content: flex-start; gap: 1.5vh; padding-top: calc(env(safe-area-inset-top) + 4vh); padding-bottom: 7vh; overflow-y: auto; }
-    #clock { width: 52vw; height: 52vw; } #wx { font-size: 3.8vw; } #endAt { font-size: 4.2vw; }
+    #clock { width: 52vw; height: 52vw; } #wx { font-size: 3.8vw; min-height: 11vw; } #wx b { font-size: 5.4vw; }
     #cd { font-size: 24vw; } #phase { font-size: 4.4vw; } #info { font-size: 5vw; }
     #stats { max-width: 92vw; } #stats .side b { font-size: 22vw; } #stats .side small { font-size: 3vw; }
     #stats .side.small b { font-size: 10vw; }
-    #stats .side { min-width: 18vw; } #timerRow { font-size: 7vw; } #timerRow small { font-size: 4vw; }
+    #stats .side { min-width: 18vw; } #timerRow small { font-size: 4vw; } #timerRow b { font-size: 6.4vw; }
     button { font-size: 4.6vw; padding: 2vw 4.4vw; }
     #side { width: 92vw; max-height: none; overflow: visible; }
     .adj { font-size: 4vw; } .adj span { min-width: 38vw; } .adj button { font-size: 5vw; padding: 1.2vw 3.6vw; }
-    #brand { font-size: 3.8vw; }
-  }
+    }
 </style>
 </head>
 <body>
 <div id="app">
   <div id="left">
-    <div id="clock"></div>
-    <div id="endAt"><span id="endLbl">Planlanan bitiş</span><br><b id="endTime">--:--</b></div>
     <div id="wx"></div>
+    <div id="clock"></div>
   </div>
 
   <div id="mid">
@@ -84,7 +81,7 @@
       <span class="side"><small>SET</small><b id="setNow">0</b></span>
       <span class="side small"><small>YAPILAN SET</small><b id="doneNow">0</b></span>
     </div>
-    <div id="timerRow"><small>Geçen süre</small><span id="timer">00:00</span></div>
+    <div id="timerRow"><span class="tr"><small>Geçen süre</small><b id="timer">00:00</b></span><span class="tr"><small id="endLbl">Planlanan bitiş</small><b id="endTime">--:--</b></span></div>
   </div>
 
   <div id="side">
@@ -96,7 +93,6 @@
     <button id="voiceBtn">Konuşma: kapalı</button>
     <button id="soundBtn" class="go">Ses: açık</button>
   </div>
-  <div id="brand">Hasan Keskin Egzersiz Saati</div>
 </div>
 
 <script>
@@ -110,24 +106,24 @@ function makeClock(container) {
   svg.setAttribute('viewBox', '-100 -100 200 200');
   const add = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag);
     for (const k in attrs) e.setAttribute(k, attrs[k]); (parent || svg).appendChild(e); return e; };
-  add('circle', {r: 96, fill: '#0b0b0b', stroke: '#444', 'stroke-width': 2});
-  const ring = add('circle', {r: 98, fill: 'none', stroke: '#30d158', 'stroke-width': 4, 'stroke-linecap': 'round',
+  add('circle', {r: 96, fill: '#0f172a', stroke: '#334155', 'stroke-width': 2});
+  const ring = add('circle', {r: 98, fill: 'none', stroke: '#5eead4', 'stroke-width': 4, 'stroke-linecap': 'round',
     transform: 'rotate(-90)', 'stroke-dasharray': '0 1000', opacity: 0});
   for (let i = 0; i < 60; i++) {
     const a = i * 6 * Math.PI / 180, big = i % 5 === 0, r1 = big ? 80 : 86, r2 = 92;
-    add('line', {x1: Math.sin(a)*r1, y1: -Math.cos(a)*r1, x2: Math.sin(a)*r2, y2: -Math.cos(a)*r2, stroke: big ? '#fff' : '#777', 'stroke-width': big ? 2.4 : 1});
+    add('line', {x1: Math.sin(a)*r1, y1: -Math.cos(a)*r1, x2: Math.sin(a)*r2, y2: -Math.cos(a)*r2, stroke: big ? '#fff' : '#64748b', 'stroke-width': big ? 2.4 : 1});
   }
   for (let n = 1; n <= 12; n++) {
     const a = n * 30 * Math.PI / 180;
     const t = add('text', {x: Math.sin(a)*66, y: -Math.cos(a)*66, fill: '#fff', 'font-size': 13, 'text-anchor': 'middle', 'dominant-baseline': 'central'});
     t.textContent = n;
   }
-  const hh = add('line', {x1: 0, y1: 6, x2: 0, y2: -48, stroke: '#fff', 'stroke-width': 5, 'stroke-linecap': 'round'});
-  const mm = add('line', {x1: 0, y1: 8, x2: 0, y2: -72, stroke: '#fff', 'stroke-width': 3.5, 'stroke-linecap': 'round'});
+  const hh = add('line', {x1: 0, y1: 6, x2: 0, y2: -48, stroke: '#f1f5f9', 'stroke-width': 5, 'stroke-linecap': 'round'});
+  const mm = add('line', {x1: 0, y1: 8, x2: 0, y2: -72, stroke: '#f1f5f9', 'stroke-width': 3.5, 'stroke-linecap': 'round'});
   const ss = add('g', {});
-  add('line', {x1: 0, y1: 18, x2: 0, y2: -82, stroke: '#ff9500', 'stroke-width': 1.8, 'stroke-linecap': 'round'}, ss);
-  add('circle', {r: 3.5, fill: '#ff9500'}, ss);
-  add('circle', {r: 1.6, fill: '#000'});
+  add('line', {x1: 0, y1: 18, x2: 0, y2: -82, stroke: '#fb923c', 'stroke-width': 1.8, 'stroke-linecap': 'round'}, ss);
+  add('circle', {r: 3.5, fill: '#fb923c'}, ss);
+  add('circle', {r: 1.6, fill: '#0f172a'});
   container.appendChild(svg);
   return {hh, mm, ss, ring};
 }
@@ -227,7 +223,7 @@ function speak(text) {
   } catch (e) {}
 }
 function showVoiceBtn() {
-  $('voiceBtn').textContent = voiceOn ? 'Konuşma: açık (kadın sesi)' : 'Konuşma: kapalı';
+  $('voiceBtn').textContent = voiceOn ? 'Konuşma: açık' : 'Konuşma: kapalı';
   $('voiceBtn').className = voiceOn ? 'go' : '';
 }
 $('voiceBtn').onclick = () => {
@@ -337,7 +333,7 @@ function logic() {
   if (run && !paused) {
     const g = segs[si], leftMs = Math.max(0, segEnd - now), left = Math.ceil(leftMs / 1000);
     const warn = left <= 3 && left >= 1;
-    setRing(leftMs / (g.dur * 1000), g.type === 'work' ? (warn ? '#ff453a' : '#30d158') : (warn ? '#ffd60a' : '#0a84ff'));
+    setRing(leftMs / (g.dur * 1000), g.type === 'work' ? (warn ? '#fb7185' : '#5eead4') : (warn ? '#fbbf24' : '#7dd3fc'));
     if (left !== lastShown) {
       lastShown = left; $('cd').textContent = left;
       $('cd').className = ((g.type === 'work' ? '' : 'rest') + (warn ? (g.type === 'work' ? ' warn' : ' warnRest') : '')).trim();
@@ -389,7 +385,7 @@ function wxText(c) {
   if (c === 0) return 'Açık'; if (c <= 3) return 'Bulutlu'; if (c === 45 || c === 48) return 'Sisli';
   if (c >= 51 && c <= 67) return 'Yağmurlu'; if (c >= 71 && c <= 77) return 'Karlı'; if (c >= 80 && c <= 82) return 'Sağanak'; if (c >= 95) return 'Fırtına'; return '';
 }
-function showWx(o) { $('wx').textContent = [o.city, Math.round(o.t) + '°C', wxText(o.c)].filter(Boolean).join(' · '); }
+function showWx(o) { $('wx').innerHTML = '<b>' + [o.city, Math.round(o.t) + '°C'].filter(Boolean).join(' ') + '</b>' + wxText(o.c); }
 try { const old = JSON.parse(localStorage.getItem('egz-wx') || 'null'); if (old) showWx(old); } catch (e) {}
 function loadWx() {
   if (!navigator.geolocation) return;
