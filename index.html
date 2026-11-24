@@ -7,14 +7,14 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Egzersiz">
-<meta name="theme-color" content="#0a0f2e">
+<meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>Egzersiz Saati</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
-  html, body { margin: 0; height: 100%; background: #0a0f2e; background-image: linear-gradient(160deg, #0a0f2e 0%, #1c1b6b 100%); color: #f0f4ff; font-family: -apple-system, Helvetica, Arial, sans-serif; overflow: hidden; }
-  button { font-size: 3.6vmin; padding: 1.2vmin 2.6vmin; border-radius: 99px; border: 0; background: #2f3f8f; color: #fff; }
+  html, body { margin: 0; height: 100%; background: #000; color: #ffffff; font-family: -apple-system, Helvetica, Arial, sans-serif; overflow: hidden; }
+  button { font-size: 3.6vmin; padding: 1.2vmin 2.6vmin; border-radius: 99px; border: 0; background: #26262d; color: #fff; }
   button.go { background: #0fae6e; } button.stop { background: #e11d48; }
   svg { width: 100%; height: 100%; }
   #app { position: absolute; inset: 0; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 2.5vmin;
@@ -23,7 +23,7 @@
   /* SOL: analog + dijital + planlanan bitis */
   #left { flex: none; display: flex; flex-direction: column; align-items: center; gap: .8vmin; }
   #clock { width: 46vmin; height: 46vmin; }
-  #wx { align-self: flex-start; text-align: left; font-size: 3.4vmin; line-height: 1.25; min-height: 8vmin; color: #c7d2fe; } #wx b { display: block; font-size: 4.6vmin; color: #fff; font-weight: 600; }
+  #wx { cursor: pointer; align-self: flex-start; text-align: left; font-size: 3.4vmin; line-height: 1.25; min-height: 8vmin; color: #b9bdc9; } #wx b { display: block; font-size: 4.6vmin; color: #fff; font-weight: 600; }
 
   /* ORTA */
   #mid { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1.2vmin; }
@@ -34,14 +34,14 @@
   #info { font-size: 4vmin; font-weight: 600; color: #ffd84d; }
   #btnRow { display: flex; gap: 2vmin; }
   button.pause { background: #ea7a0a; }
-  #stats { width: 100%; max-width: 46vw; background: rgba(99,102,241,.30); border-radius: 5vmin; padding: .8vmin 2vmin; display: flex; align-items: center; justify-content: space-around; gap: 1vmin; }
+  #stats { width: 100%; max-width: 46vw; background: rgba(255,255,255,.09); border-radius: 5vmin; padding: .8vmin 2vmin; display: flex; align-items: center; justify-content: space-around; gap: 1vmin; }
   #stats .side { display: flex; flex-direction: column; align-items: center; min-width: 11vmin; }
   #stats .side small { font-size: 2.4vmin; opacity: .7; }
   #stats .side b { font-size: 16vmin; line-height: 1.1; font-variant-numeric: tabular-nums; }
   #stats .side.small b { font-size: 8vmin; color: #19f0a0; }
   #timerRow { display: flex; flex-wrap: wrap; justify-content: center; column-gap: 3.4vmin; row-gap: .4vmin; font-variant-numeric: tabular-nums; }
   #timerRow .tr { display: inline-flex; align-items: baseline; gap: 1vmin; white-space: nowrap; }
-  #timerRow small { font-size: 3vmin; opacity: .75; font-weight: 400; color: #c7d2fe; }
+  #timerRow small { font-size: 3vmin; opacity: .75; font-weight: 400; color: #b9bdc9; }
   #timerRow b { font-size: 5vmin; font-weight: 600; color: #ffd84d; }
 
   /* SAG: ayarlar */
@@ -106,12 +106,12 @@ function makeClock(container) {
   svg.setAttribute('viewBox', '-100 -100 200 200');
   const add = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag);
     for (const k in attrs) e.setAttribute(k, attrs[k]); (parent || svg).appendChild(e); return e; };
-  add('circle', {r: 96, fill: '#101a45', stroke: '#3d56c8', 'stroke-width': 2});
+  add('circle', {r: 96, fill: '#0c0c0e', stroke: '#3a3a42', 'stroke-width': 2});
   const ring = add('circle', {r: 98, fill: 'none', stroke: '#19f0a0', 'stroke-width': 4, 'stroke-linecap': 'round',
     transform: 'rotate(-90)', 'stroke-dasharray': '0 1000', opacity: 0});
   for (let i = 0; i < 60; i++) {
     const a = i * 6 * Math.PI / 180, big = i % 5 === 0, r1 = big ? 80 : 86, r2 = 92;
-    add('line', {x1: Math.sin(a)*r1, y1: -Math.cos(a)*r1, x2: Math.sin(a)*r2, y2: -Math.cos(a)*r2, stroke: big ? '#fff' : '#8da2ff', 'stroke-width': big ? 2.4 : 1});
+    add('line', {x1: Math.sin(a)*r1, y1: -Math.cos(a)*r1, x2: Math.sin(a)*r2, y2: -Math.cos(a)*r2, stroke: big ? '#fff' : '#8b8b96', 'stroke-width': big ? 2.4 : 1});
   }
   for (let n = 1; n <= 12; n++) {
     const a = n * 30 * Math.PI / 180;
@@ -123,7 +123,7 @@ function makeClock(container) {
   const ss = add('g', {});
   add('line', {x1: 0, y1: 18, x2: 0, y2: -82, stroke: '#ff7a1a', 'stroke-width': 1.8, 'stroke-linecap': 'round'}, ss);
   add('circle', {r: 3.5, fill: '#ff7a1a'}, ss);
-  add('circle', {r: 1.6, fill: '#101a45'});
+  add('circle', {r: 1.6, fill: '#0c0c0e'});
   container.appendChild(svg);
   return {hh, mm, ss, ring};
 }
@@ -386,26 +386,35 @@ async function keepAwake() {
 }
 keepAwake(); setInterval(keepAwake, 5000);
 
-/* ---------- Konum + sicaklik (Open-Meteo, anahtarsiz) ---------- */
+/* ---------- Sicaklik (Open-Meteo, anahtarsiz) ---------- */
 function wxText(c) {
   if (c === 0) return 'Açık'; if (c <= 3) return 'Bulutlu'; if (c === 45 || c === 48) return 'Sisli';
   if (c >= 51 && c <= 67) return 'Yağmurlu'; if (c >= 71 && c <= 77) return 'Karlı'; if (c >= 80 && c <= 82) return 'Sağanak'; if (c >= 95) return 'Fırtına'; return '';
 }
 function showWx(o) { $('wx').innerHTML = '<b>' + [o.city, Math.round(o.t) + '°C'].filter(Boolean).join(' ') + '</b>' + wxText(o.c); }
-try { const old = JSON.parse(localStorage.getItem('egz-wx') || 'null'); if (old) showWx(old); } catch (e) {}
-function loadWx() {
-  if (!navigator.geolocation) return;
-  navigator.geolocation.getCurrentPosition(async pos => {
-    try {
-      const la = pos.coords.latitude, lo = pos.coords.longitude;
-      const w = await (await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + la + '&longitude=' + lo + '&current=temperature_2m,weather_code&timezone=auto')).json();
-      let city = '';
-      try { const g = await (await fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + la + '&longitude=' + lo + '&localityLanguage=tr')).json(); city = g.city || g.locality || g.principalSubdivision || ''; } catch (e) {}
-      const o = {city, t: w.current.temperature_2m, c: w.current.weather_code};
-      showWx(o); try { localStorage.setItem('egz-wx', JSON.stringify(o)); } catch (e) {}
-    } catch (e) {}
-  }, () => {}, {maximumAge: 600000, timeout: 10000});
+/* konum izni ISTEMEZ: sehir kayitli (varsayilan Ankara). Degistirmek icin hava yazisina dokun. */
+let wxCity = {name: 'Ankara', lat: 39.9334, lon: 32.8597};
+try { const c = JSON.parse(localStorage.getItem('egz-city') || 'null'); if (c && c.name) wxCity = c; } catch (e) {}
+try { const old = JSON.parse(localStorage.getItem('egz-wx2') || 'null'); if (old && old.city === wxCity.name) showWx(old); } catch (e) {}
+async function loadWx() {
+  try {
+    const w = await (await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + wxCity.lat + '&longitude=' + wxCity.lon + '&current=temperature_2m,weather_code&timezone=auto')).json();
+    const o = {city: wxCity.name, t: w.current.temperature_2m, c: w.current.weather_code};
+    showWx(o); try { localStorage.setItem('egz-wx2', JSON.stringify(o)); } catch (e) {}
+  } catch (e) {}
 }
+$('wx').onclick = async () => {
+  const n = prompt('Şehir adı yaz (örn. Ankara):', wxCity.name);
+  if (!n || !n.trim()) return;
+  try {
+    const g = await (await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(n.trim()) + '&count=1&language=tr')).json();
+    if (!g.results || !g.results.length) { alert('Şehir bulunamadı'); return; }
+    const r = g.results[0];
+    wxCity = {name: r.name, lat: r.latitude, lon: r.longitude};
+    try { localStorage.setItem('egz-city', JSON.stringify(wxCity)); } catch (e) {}
+    loadWx();
+  } catch (e) { alert('İnternet gerekli'); }
+};
 loadWx(); setInterval(loadWx, 15 * 60 * 1000);
 
 showCfg();
