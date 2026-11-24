@@ -6,334 +6,517 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Egzersiz">
+<meta name="apple-mobile-web-app-title" content="Saat">
 <meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-180.png">
-<title>Egzersiz Saati</title>
+<link rel="apple-touch-icon" href="icon.png">
+<title>Saat</title>
 <style>
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
-  html, body { margin: 0; height: 100%; background: #000; color: #fff; font-family: -apple-system, Helvetica, Arial, sans-serif; overflow: hidden; }
-  button { font-size: 3.6vmin; padding: 1.2vmin 2.6vmin; border-radius: 99px; border: 0; background: #222; color: #fff; }
-  button.go { background: #1f7a3a; } button.stop { background: #8a2222; }
-  svg { width: 100%; height: 100%; }
-  #app { position: absolute; inset: 0; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 2.5vmin;
-    padding: env(safe-area-inset-top) max(2vw, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 5vmin) max(2vw, env(safe-area-inset-left)); }
+  :root {
+    --work: #30d158;   /* calisma: yesil */
+    --rest: #64d2ff;   /* mola: acik mavi */
+    --warn: #ffd60a;   /* son 3 saniye: sari (saniye ibresi kirmizi kalir) */
+    --done: #ff9f0a;
+    --panel: #1c1c1e;
+    --panel2: #2c2c2e;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  html, body { margin: 0; height: 100%; background: #000; color: #fff; overflow: hidden; touch-action: manipulation;
+    font-family: -apple-system, "SF Pro Display", "SF Pro Rounded", Helvetica, Arial, sans-serif; }
+  .screen { position: absolute; inset: 0; display: none;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  .screen.on { display: flex; }
+  svg { width: 100%; height: 100%; display: block; }
+  button { font: inherit; font-size: 3.3vmin; font-weight: 600; color: #fff; border: 0; border-radius: 99px;
+    background: var(--panel2); padding: 1.3vmin 2.8vmin; white-space: nowrap; cursor: pointer; }
+  button:active { filter: brightness(1.3); transform: scale(.97); }
+  .btn-go    { background: linear-gradient(135deg, #34d95b, #12a63f); }
+  .btn-pause { background: linear-gradient(135deg, #ffb020, #ff7a00); color: #000; }
+  .btn-snd   { background: linear-gradient(135deg, #c55cf5, #5e5ce6); }
 
-  /* SOL: analog + dijital + planlanan bitis */
-  #left { flex: none; display: flex; flex-direction: column; align-items: center; gap: .8vmin; }
-  #clock { width: 44vmin; height: 44vmin; }
-  #digital { font-size: 9vmin; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
-  #endAt { font-size: 3.4vmin; color: #ffb000; font-variant-numeric: tabular-nums; text-align: center; line-height: 1.2; }
+  /* ---------- EKRAN 1: sadece saat ---------- */
+  #home { align-items: center; justify-content: center; }
+  #homeClock { width: 92vmin; height: 92vmin; max-width: 96vw; max-height: 96vh; }
+  #workoutBtn { position: absolute; right: calc(env(safe-area-inset-right) + 3vmin); bottom: calc(env(safe-area-inset-bottom) + 3vmin);
+    background: linear-gradient(135deg, #ffb020, #ff6a00); color: #000; font-size: 3.4vmin; padding: 1.6vmin 3.4vmin; }
 
-  /* ORTA */
-  #mid { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1.2vmin; }
-  #cd { font-size: 19vmin; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; color: #30d158; }
-  #cd.rest { color: #0a84ff; } #cd.warn { color: #ff453a; }
-  #phase { font-size: 3.6vmin; opacity: .85; text-align: center; }
-  #audioWarn { display: none; background: #8a2222; border-radius: 99px; padding: .6vmin 2.4vmin; font-size: 3vmin; }
-  #info { font-size: 4vmin; font-weight: 600; color: #ffb000; }
-  #btnRow { display: flex; gap: 2vmin; }
-  button.pause { background: #b36b00; }
-  #counterBtn { width: 100%; max-width: 46vw; background: #123a6b; border-radius: 5vmin; padding: .8vmin 2vmin; display: flex; align-items: center; justify-content: space-around; gap: 1vmin; }
-  #counterBtn .side { display: flex; flex-direction: column; align-items: center; min-width: 11vmin; }
-  #counterBtn .side small, #counterBtn .mid small { font-size: 2.4vmin; opacity: .7; }
-  #counterBtn .side b { font-size: 16vmin; line-height: 1.1; font-variant-numeric: tabular-nums; }
-  #counterBtn .side.small b { font-size: 8vmin; color: #30d158; }
-  #counterBtn .mid { display: flex; flex-direction: column; align-items: center; }
-  #count { font-size: 10vmin; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
-  #timerRow { font-size: 5vmin; font-weight: 600; font-variant-numeric: tabular-nums; color: #ffb000; }
-  #timerRow small { font-size: 3vmin; opacity: .7; font-weight: 400; margin-right: 1vmin; }
+  /* ---------- EKRAN 2: egzersiz (yatay) ---------- */
+  #workout { align-items: center; justify-content: center; gap: 3vmin;
+    padding-left: calc(env(safe-area-inset-left) + 1.5vw); padding-right: calc(env(safe-area-inset-right) + 1.5vw);
+    padding-bottom: calc(env(safe-area-inset-bottom) + 5vmin); }
+  #miniClock { width: 68vmin; height: 68vmin; flex: none; }
+  #wMid { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1.1vmin; }
+  #cd { font-size: 21vmin; font-weight: 800; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+    color: var(--work); text-shadow: 0 0 5vmin rgba(48,209,88,.35); }
+  #cd.rest { color: var(--rest); text-shadow: 0 0 5vmin rgba(100,210,255,.35); }
+  #cd.warn { color: var(--warn); text-shadow: 0 0 5vmin rgba(255,214,10,.45); animation: pulse 1s ease-out infinite; }
+  #cd.done { color: var(--done); font-size: 14vmin; text-shadow: 0 0 5vmin rgba(255,159,10,.4); }
+  @keyframes pulse { 0% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  #phase { font-size: 3.2vmin; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+  #setLabel { font-size: 3.9vmin; font-weight: 700; color: var(--warn); }
+  #dots { display: flex; flex-wrap: wrap; justify-content: center; gap: .9vmin; max-width: 100%; min-height: 2vmin; }
+  #dots i { width: 2vmin; height: 2vmin; border-radius: 50%; background: #3a3a3c; }
+  #dots i.done { background: linear-gradient(135deg, #34d95b, #64d2ff); }
+  #dots i.cur { background: transparent; box-shadow: inset 0 0 0 .4vmin var(--warn); }
+  #stats { display: flex; gap: 1.2vmin; width: 100%; }
+  .stat { flex: 1; min-width: 0; background: var(--panel); border-radius: 2vmin; padding: .8vmin .6vmin; text-align: center; }
+  .stat small { display: block; font-size: 2.3vmin; opacity: .6; letter-spacing: .04em; }
+  .stat b { display: block; font-size: 3.6vmin; font-variant-numeric: tabular-nums; }
+  #mainRow { display: flex; gap: 1.6vmin; align-items: center; }
+  #mainBtn { font-size: 4.2vmin; padding: 1.6vmin 4.4vmin; }
 
-  /* SAG: ayarlar */
-  #side { flex: none; display: flex; flex-direction: column; gap: .9vmin; max-height: 100%; overflow-y: auto; padding: 1vmin 0; }
-  .adj { display: flex; align-items: center; justify-content: space-between; gap: 1vmin; font-size: 3vmin; }
-  .adj span { opacity: .9; min-width: 24vmin; text-align: center; }
-  .adj button { font-size: 3.6vmin; padding: .6vmin 2vmin; }
-
-  #brand { position: absolute; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 1vmin); text-align: center;
-    font-size: 3vmin; font-weight: 700; letter-spacing: .3vmin; color: #0a84ff; }
+  #wSide { flex: none; width: 56vmin; display: flex; flex-direction: column; gap: 1.1vmin; align-items: stretch; }
+  .adj { display: flex; align-items: center; justify-content: space-between; gap: 1vmin; background: var(--panel); border-radius: 99px; padding: .5vmin; }
+  .adj button { min-width: 10vmin; padding: .9vmin 1.6vmin; font-size: 3.2vmin; }
+  .adj span { flex: 1; text-align: center; font-size: 2.7vmin; line-height: 1.15; opacity: .9; }
+  .adj span b { display: block; font-size: 3.4vmin; opacity: 1; }
+  #brand { position: absolute; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 1.2vmin); text-align: center;
+    font-size: 2.9vmin; font-weight: 800; letter-spacing: .35vmin;
+    background: linear-gradient(90deg, #ff9f0a, #ff375f, #bf5af2, #0a84ff, #30d158);
+    -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
 
   @media (orientation: portrait) {
-    #app { flex-direction: column; justify-content: flex-start; gap: 1.5vh; padding-top: calc(env(safe-area-inset-top) + 4vh); padding-bottom: 7vh; overflow-y: auto; }
-    #clock { width: 52vw; height: 52vw; } #digital { font-size: 11vw; } #endAt { font-size: 4.2vw; }
-    #cd { font-size: 24vw; } #phase { font-size: 4.4vw; } #info { font-size: 5vw; }
-    #counterBtn { max-width: 92vw; } #counterBtn .side b { font-size: 22vw; } #counterBtn .side small, #counterBtn .mid small { font-size: 3vw; }
-    #counterBtn .side.small b { font-size: 10vw; }
-    #counterBtn .side { min-width: 18vw; } #count { font-size: 14vw; } #timerRow { font-size: 7vw; } #timerRow small { font-size: 4vw; }
-    button { font-size: 4.6vw; padding: 2vw 4.4vw; }
-    #side { width: 92vw; max-height: none; overflow: visible; }
-    .adj { font-size: 4vw; } .adj span { min-width: 38vw; } .adj button { font-size: 5vw; padding: 1.2vw 3.6vw; }
-    #brand { font-size: 3.8vw; }
+    #workout { flex-direction: column; justify-content: flex-start; overflow-y: auto; gap: 2.2vw;
+      padding-top: calc(env(safe-area-inset-top) + 2vh); padding-bottom: calc(env(safe-area-inset-bottom) + 4vw); }
+    #miniClock { width: 60vw; height: 60vw; }
+    #wMid { flex: none; width: 100%; gap: 2vw; }
+    #cd { font-size: 26vw; } #phase { font-size: 4.2vw; } #setLabel { font-size: 5.4vw; }
+    #dots i { width: 3vw; height: 3vw; }
+    .stat small { font-size: 3vw; } .stat b { font-size: 5vw; }
+    button { font-size: 4.6vw; padding: 2.2vw 4.6vw; }
+    #mainBtn { font-size: 5.6vw; padding: 2.8vw 7vw; }
+    #wSide { width: 92vw; gap: 2vw; }
+    .adj span { font-size: 3.5vw; } .adj span b { font-size: 4.6vw; }
+    .adj button { font-size: 5vw; padding: 1.6vw 4vw; min-width: 14vw; }
+    #brand { position: static; margin: 1vw 0 0; font-size: 3.6vw; }
+    #workoutBtn { font-size: 4.4vw; padding: 2.4vw 5vw; }
   }
 </style>
 </head>
 <body>
-<div id="app">
-  <div id="left">
-    <div id="clock"></div>
-    <div id="digital">00:00:00</div>
-    <div id="endAt">Planlanan bitiş<br><b id="endTime">--:--</b></div>
-  </div>
 
-  <div id="mid">
-    <div id="cd">20</div>
+<!-- EKRAN 1: sadece saat -->
+<div id="home" class="screen on">
+  <div id="homeClock"></div>
+  <button id="workoutBtn">Egzersiz</button>
+</div>
+
+<!-- EKRAN 2: egzersiz -->
+<div id="workout" class="screen">
+  <div id="miniClock"></div>
+
+  <div id="wMid">
+    <div id="cd" class="work">15</div>
     <div id="phase">Hazır</div>
-    <div id="audioWarn">Ses kesildi: ekrana bir kez dokun</div>
-    <div id="info">Hareket <span id="moveNow">0</span> / <span id="moveTotal">7</span></div>
-    <div id="btnRow"><button id="startBtn" class="go">Başlat</button><button id="resetBtn">Sıfırla</button></div>
-    <button id="counterBtn">
-      <span class="mid"><b id="count">0</b><small>Dokun: tekrar say</small></span>
-      <span class="side"><small>SET</small><b id="setNow">0</b></span>
-      <span class="side small"><small>YAPILAN SET</small><b id="doneNow">0</b></span>
-    </button>
-    <div id="timerRow"><small>Geçen süre</small><span id="timer">00:00</span></div>
+    <div id="setLabel">10 set</div>
+    <div id="dots"></div>
+    <div id="stats">
+      <div class="stat"><small>Geçen</small><b id="stElapsed">00:00</b></div>
+      <div class="stat"><small>Kalan</small><b id="stLeft">05:30</b></div>
+      <div class="stat"><small>Bitiş</small><b id="stEnd">--:--</b></div>
+    </div>
+    <div id="mainRow">
+      <button id="mainBtn" class="btn-go">Başlat</button>
+      <button id="resetBtn">Sıfırla</button>
+    </div>
   </div>
 
-  <div id="side">
-    <div class="adj"><button data-k="work" data-d="-5">− 5</button><span>Egzersiz: <b id="v_work"></b> sn</span><button data-k="work" data-d="5">+ 5</button></div>
-    <div class="adj"><button data-k="rest" data-d="-1">− 1</button><span>Mola: <b id="v_rest"></b> sn</span><button data-k="rest" data-d="1">+ 1</button></div>
-    <div class="adj"><button data-k="sets" data-d="-1">− 1</button><span>Set: <b id="v_sets"></b></span><button data-k="sets" data-d="1">+ 1</button></div>
-    <div class="adj"><button data-k="moves" data-d="-1">− 1</button><span>Hareket: <b id="v_moves"></b></span><button data-k="moves" data-d="1">+ 1</button></div>
-    <div class="adj"><button data-k="moveRest" data-d="-5">− 5</button><span>Hareket arası: <b id="v_moveRest"></b> sn</span><button data-k="moveRest" data-d="5">+ 5</button></div>
-    <button id="zeroBtn">Sayıyı sıfırla</button>
-    <button id="soundBtn" class="go">Ses: açık</button>
+  <div id="wSide">
+    <div class="adj"><button id="intMinus">−5</button><span>Çalışma<b id="vInt">15 sn</b></span><button id="intPlus">+5</button></div>
+    <div class="adj"><button id="restMinus">−5</button><span>Mola<b id="vRest">20 sn</b></span><button id="restPlus">+5</button></div>
+    <div class="adj"><button id="setMinus">−1</button><span>Set sayısı<b id="vSets">10</b></span><button id="setPlus">+1</button></div>
+    <button id="sndBtn" class="btn-snd">Ses: Bip</button>
+    <button id="listenBtn">Dinle: kapalı</button>
+    <button id="backBtn">Saate dön</button>
   </div>
+
   <div id="brand">Hasan Keskin Egzersiz Saati</div>
 </div>
 
 <script>
-const NS = 'http://www.w3.org/2000/svg';
+(() => {
+'use strict';
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2, '0');
+const NS = 'http://www.w3.org/2000/svg';
 
-/* ---------- Analog kadran ---------- */
-function makeClock(container) {
+/* ================= AYARLAR ================= */
+const S = { interval: 15, rest: 20, sets: 10, mode: 'bip' };   // mode: bip | konus | kapali
+const KEY = 'saat-ayar-v3';
+try {
+  const j = JSON.parse(localStorage.getItem(KEY) || '{}');
+  ['interval', 'rest', 'sets'].forEach(k => { if (Number.isFinite(j[k]) && j[k] >= 1 && j[k] <= 600) S[k] = Math.round(j[k]); });
+  if (['bip', 'konus', 'kapali'].indexOf(j.mode) >= 0) S.mode = j.mode;
+} catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+/* ================= ANALOG KADRAN (StandBy tarzi) ================= */
+function makeClock(host) {
   const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', '-100 -100 200 200');
-  const add = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag);
-    for (const k in attrs) e.setAttribute(k, attrs[k]); (parent || svg).appendChild(e); return e; };
-  add('circle', {r: 96, fill: '#0b0b0b', stroke: '#444', 'stroke-width': 2});
-  const ring = add('circle', {r: 98, fill: 'none', stroke: '#30d158', 'stroke-width': 4, 'stroke-linecap': 'round',
-    transform: 'rotate(-90)', 'stroke-dasharray': '0 1000', opacity: 0});
+  svg.setAttribute('viewBox', '-104 -104 208 208');
+  const add = (tag, attrs, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    (parent || svg).appendChild(e); return e;
+  };
+  add('circle', { r: 100, fill: '#000' });
+  const track = add('circle', { r: 101.5, fill: 'none', stroke: '#1c1c1e', 'stroke-width': 3, opacity: 0 });
+  const ring = add('circle', { r: 101.5, fill: 'none', stroke: '#30d158', 'stroke-width': 3, 'stroke-linecap': 'round',
+    transform: 'rotate(-90)', 'stroke-dasharray': '0 1000', opacity: 0 });
   for (let i = 0; i < 60; i++) {
-    const a = i * 6 * Math.PI / 180, big = i % 5 === 0, r1 = big ? 80 : 86, r2 = 92;
-    add('line', {x1: Math.sin(a)*r1, y1: -Math.cos(a)*r1, x2: Math.sin(a)*r2, y2: -Math.cos(a)*r2, stroke: big ? '#fff' : '#777', 'stroke-width': big ? 2.4 : 1});
+    const a = i * Math.PI / 30, hr = i % 5 === 0, r1 = hr ? 88 : 92.5, r2 = 98;
+    add('line', { x1: Math.sin(a) * r1, y1: -Math.cos(a) * r1, x2: Math.sin(a) * r2, y2: -Math.cos(a) * r2,
+      stroke: hr ? '#fff' : '#8e8e93', 'stroke-width': hr ? 2.8 : 1.5, 'stroke-linecap': 'round', opacity: hr ? 1 : .75 });
   }
   for (let n = 1; n <= 12; n++) {
-    const a = n * 30 * Math.PI / 180;
-    const t = add('text', {x: Math.sin(a)*66, y: -Math.cos(a)*66, fill: '#fff', 'font-size': 13, 'text-anchor': 'middle', 'dominant-baseline': 'central'});
+    const a = n * Math.PI / 6;
+    const t = add('text', { x: Math.sin(a) * 69, y: -Math.cos(a) * 69, fill: '#fff', 'font-size': 25, 'font-weight': 700,
+      'text-anchor': 'middle', dy: '.35em' });
+    t.setAttribute('style', 'font-family:-apple-system,"SF Pro Display",Helvetica,Arial,sans-serif');
     t.textContent = n;
   }
-  const hh = add('line', {x1: 0, y1: 6, x2: 0, y2: -48, stroke: '#fff', 'stroke-width': 5, 'stroke-linecap': 'round'});
-  const mm = add('line', {x1: 0, y1: 8, x2: 0, y2: -72, stroke: '#fff', 'stroke-width': 3.5, 'stroke-linecap': 'round'});
+  const hh = add('line', { x1: 0, y1: 9, x2: 0, y2: -50, stroke: '#f2f2f7', 'stroke-width': 7.5, 'stroke-linecap': 'round' });
+  const mm = add('line', { x1: 0, y1: 9, x2: 0, y2: -80, stroke: '#f2f2f7', 'stroke-width': 6, 'stroke-linecap': 'round' });
+  add('circle', { r: 7.5, fill: '#fff' });
   const ss = add('g', {});
-  add('line', {x1: 0, y1: 18, x2: 0, y2: -82, stroke: '#ff9500', 'stroke-width': 1.8, 'stroke-linecap': 'round'}, ss);
-  add('circle', {r: 3.5, fill: '#ff9500'}, ss);
-  add('circle', {r: 1.6, fill: '#000'});
-  container.appendChild(svg);
-  return {hh, mm, ss, ring};
+  add('line', { x1: 0, y1: 24, x2: 0, y2: -90, stroke: '#ff3b30', 'stroke-width': 1.9, 'stroke-linecap': 'round' }, ss);
+  add('circle', { r: 5, fill: '#ff3b30' }, ss);
+  add('circle', { r: 2, fill: '#000' }, ss);
+  host.appendChild(svg);
+  return { hh, mm, ss, ring, track };
 }
-const clock = makeClock($('clock'));
-const RING_LEN = 2 * Math.PI * 98;
+const bigClock = makeClock($('homeClock'));
+const miniClock = makeClock($('miniClock'));
+function setHands(c, h, m, s) {
+  c.ss.setAttribute('transform', 'rotate(' + (s * 6) + ')');
+  c.mm.setAttribute('transform', 'rotate(' + (m * 6) + ')');
+  c.hh.setAttribute('transform', 'rotate(' + (h * 30) + ')');
+}
+const RING_LEN = 2 * Math.PI * 101.5;
 function setRing(frac, color) {
-  clock.ring.setAttribute('opacity', frac === null ? 0 : 1);
-  if (frac !== null) { clock.ring.setAttribute('stroke-dasharray', (RING_LEN * frac) + ' ' + RING_LEN); clock.ring.setAttribute('stroke', color); }
+  [bigClock, miniClock].forEach(c => {
+    if (frac === null) { c.ring.setAttribute('opacity', 0); c.track.setAttribute('opacity', 0); return; }
+    c.ring.setAttribute('opacity', 1); c.track.setAttribute('opacity', 1);
+    c.ring.setAttribute('stroke-dasharray', (RING_LEN * frac) + ' ' + RING_LEN);
+    c.ring.setAttribute('stroke', color);
+  });
 }
 
-/* ---------- Ses: sadece Web Audio (bip). Konusma yok, mikrofon yok => ses kesilmez ---------- */
-let soundOn = true, ac = null, lastRebuild = 0;
-function buildAudio() {
-  try { if (ac) ac.close().catch(() => {}); } catch (e) {}
-  ac = new (window.AudioContext || window.webkitAudioContext)();
-  const me = ac;
-  // alarm/arama gibi kesintilerden sonra kendiliginden geri donmeyi dene
-  me.onstatechange = () => { if (ac === me && me.state !== 'running' && me.state !== 'closed') me.resume().catch(() => {}); };
-  // sessiz surekli osilator: ses oturumunu canli tutar
-  const o = me.createOscillator(), g = me.createGain();
-  g.gain.value = 0.00001; o.connect(g); g.connect(me.destination); o.start();
-  lastRebuild = Date.now();
+/* ================= SES ================= */
+let AC = null;
+function ac() {
+  const C = window.AudioContext || window.webkitAudioContext;
+  if (!C) return null;
+  try { if (!AC || AC.state === 'closed') AC = new C(); } catch (e) { return null; }
+  return AC;
 }
-function ensureAudio(gesture) {
-  try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) {} // muzikle birlikte calsin
-  try {
-    if (!ac || ac.state === 'closed') buildAudio();
-    if (ac.state !== 'running') {
-      ac.resume().catch(() => {});
-      // dokunusla geri getirme: resume islemezse (alarm sonrasi 'interrupted') sesi bastan kur
-      if (gesture) {
-        const c = ac;
-        setTimeout(() => {
-          if (ac === c && c.state !== 'running' && Date.now() - lastRebuild > 1200) { buildAudio(); ac.resume().catch(() => {}); }
-        }, 350);
-      }
-    }
-  } catch (e) {}
+// Sesi her zaman uyanik tutar: iPhone ekran/uygulama degisince sesi askiya alabiliyor
+function wake() {
+  const c = ac(); if (!c) return null;
+  if (c.state !== 'running') { try { const p = c.resume(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+  return c;
 }
-function beep(freq, dur, vol) {
-  if (!soundOn) return;
-  ensureAudio(false);
+function unlock() {
+  const c = wake(); if (!c) return;
+  try { const b = c.createBuffer(1, 1, 22050), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); } catch (e) {}
+}
+['touchstart', 'touchend', 'pointerdown', 'click', 'keydown'].forEach(ev =>
+  document.addEventListener(ev, unlock, { passive: true, capture: true }));
+
+function tone(freq, delay, dur, type, vol) {
+  const c = wake(); if (!c) return;
   try {
-    const t = ac.currentTime + 0.02, o = ac.createOscillator(), g = ac.createGain();
-    o.type = 'sine'; o.frequency.value = freq;
+    const t = c.currentTime + (delay || 0), o = c.createOscillator(), g = c.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(freq, t);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol || 0.6, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(vol || 0.3, t + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + dur + 0.05);
+    o.connect(g); g.connect(c.destination);
+    o.start(t); o.stop(t + dur + 0.03);
   } catch (e) {}
 }
-['touchstart', 'touchend', 'pointerdown', 'click'].forEach(ev => document.addEventListener(ev, () => ensureAudio(true), {passive: true}));
-['focus', 'pageshow'].forEach(ev => window.addEventListener(ev, () => ensureAudio(false)));
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { ensureAudio(false); keepAwake(); } });
-setInterval(() => {
-  if (ac && ac.state !== 'running') ensureAudio(false);
-  $('audioWarn').style.display = (soundOn && run && !paused && ac && ac.state !== 'running') ? 'block' : 'none';
-}, 1000);
 
-$('soundBtn').onclick = () => {
-  soundOn = !soundOn;
-  $('soundBtn').textContent = soundOn ? 'Ses: açık' : 'Ses: kapalı';
-  $('soundBtn').className = soundOn ? 'go' : '';
-  if (soundOn) beep(880, 0.15);
+let trVoice = null;
+function pickVoice() { try { trVoice = speechSynthesis.getVoices().find(v => /^tr/i.test(v.lang)) || null; } catch (e) {} }
+if ('speechSynthesis' in window) { pickVoice(); try { speechSynthesis.addEventListener('voiceschanged', pickVoice); } catch (e) {} }
+const keepUtter = [];
+function say(text) {
+  if (S.mode !== 'konus' || !('speechSynthesis' in window)) return;
+  try {
+    const y = window.speechSynthesis;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'tr-TR'; if (trVoice) u.voice = trVoice; u.rate = 1.1; u.volume = 1;
+    keepUtter.push(u); if (keepUtter.length > 6) keepUtter.shift();
+    const go = () => { try { y.resume(); y.speak(u); } catch (e) {} };
+    if (y.speaking || y.pending) { y.cancel(); setTimeout(go, 70); } else go();
+  } catch (e) {}
+}
+
+const beepsOn = () => S.mode !== 'kapali';
+const SCALE = [523.25, 587.33, 659.25, 783.99, 880, 1046.5];
+const snd = {
+  start()  { if (!beepsOn()) return; tone(660, 0, .12, 'sine', .3); tone(880, .13, .2, 'sine', .3); },
+  pause()  { if (!beepsOn()) return; tone(587, 0, .1, 'sine', .25); tone(440, .11, .16, 'sine', .25); },
+  resume() { if (!beepsOn()) return; tone(440, 0, .1, 'sine', .25); tone(587, .11, .16, 'sine', .25); },
+  // son 3 saniye: calisma = keskin yuksek "tik", mola = yumusak alcak "tuk"
+  workTick(n) { if (S.mode === 'bip') tone([0, 1700, 1400, 1100][n], 0, .08, 'triangle', .35); else if (S.mode === 'konus') say(String(n)); },
+  restTick(n) { if (S.mode === 'bip') tone([0, 720, 620, 520][n], 0, .1, 'sine', .22); else if (S.mode === 'konus') say(String(n)); },
+  // set bitti: her sette farkli perde (gam boyunca yukselir)
+  setDone(k) { if (!beepsOn()) return; const f = SCALE[(k - 1) % SCALE.length]; tone(f, 0, .55, 'sine', .4); tone(f * 1.5, .14, .7, 'sine', .3); },
+  // mola bitti, yeni set basliyor
+  go()     { if (!beepsOn()) return; tone(660, 0, .1, 'square', .16); tone(880, .12, .1, 'square', .16); tone(1320, .24, .24, 'square', .18); },
+  finish() { if (!beepsOn()) return; [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * .16, i === 3 ? .9 : .2, 'sine', .4)); }
 };
 
-/* ---------- Ayarlar ---------- */
-let cfg = {work: 20, rest: 10, sets: 10, moves: 7, moveRest: 30};
-const MIN = {work: 5, rest: 1, sets: 1, moves: 1, moveRest: 5};
-try { Object.assign(cfg, JSON.parse(localStorage.getItem('egz-cfg') || '{}')); } catch (e) {}
-function showCfg() {
-  for (const k in cfg) $('v_' + k).textContent = cfg[k];
-  $('moveTotal').textContent = cfg.moves;
-  try { localStorage.setItem('egz-cfg', JSON.stringify(cfg)); } catch (e) {}
-  if (!run) showIdle();
-}
-document.querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
-  if (run) return;
-  const k = b.dataset.k; cfg[k] = Math.max(MIN[k], cfg[k] + Number(b.dataset.d)); showCfg();
-});
-
-/* ---------- Program: hareketler x setler ---------- */
-let doneSets = 0;
-function setDone(n) { doneSets = n; $('doneNow').textContent = n; }
-let segs = [], si = 0, run = false, paused = false, pausedLeftMs = 0, pausedElapsed = 0, segEnd = 0, lastShown = -1, t0 = 0, count = 0;
-
-function buildSegs() {
-  const out = [];
-  for (let m = 1; m <= cfg.moves; m++) {
-    for (let s = 1; s <= cfg.sets; s++) {
-      out.push({type: 'work', dur: cfg.work, m, s});
-      const lastSet = s === cfg.sets, lastMove = m === cfg.moves;
-      if (lastSet && lastMove) break;
-      if (lastSet) out.push({type: 'moveRest', dur: cfg.moveRest, m, s});
-      else out.push({type: 'rest', dur: cfg.rest, m, s});
-    }
-  }
-  return out;
-}
-function totalSeconds() { return buildSegs().reduce((a, g) => a + g.dur, 0); }
-
-function setCount(n) { count = n; $('count').textContent = n; }
-$('counterBtn').onclick = () => { setCount(count + 1); beep(1000, 0.05, 0.4); };
-$('zeroBtn').onclick = () => setCount(0);
-
-function applySeg() {
-  const g = segs[si];
-  segEnd = Date.now() + g.dur * 1000; lastShown = -1;
-  const cd = $('cd'); cd.className = g.type === 'work' ? '' : 'rest';
-  const nextMove = g.type === 'moveRest' ? g.m + 1 : g.m;
-  $('moveNow').textContent = nextMove;
-  if (g.type === 'work') { $('phase').textContent = 'Egzersiz'; $('setNow').textContent = g.s; setCount(0); }
-  else if (g.type === 'rest') { $('phase').textContent = 'Mola'; }
-  else { $('phase').textContent = 'Hareket arası — sonraki hareket'; $('setNow').textContent = 0; }
-}
-function showIdle() {
-  $('cd').className = ''; $('cd').textContent = cfg.work; $('phase').textContent = 'Hazır';
-  $('moveNow').textContent = 0; $('setNow').textContent = 0; setRing(null);
-  $('timer').textContent = '00:00';
-}
-function setEndOnce() {
-  const e = new Date(Date.now() + totalSeconds() * 1000);
-  $('endTime').textContent = pad(e.getHours()) + ':' + pad(e.getMinutes()) + ':' + pad(e.getSeconds());
-}
-function clearEnd() { $('endTime').textContent = '--:--'; }
-
-function setBtn() {
-  const b = $('startBtn');
-  if (!run) { b.textContent = 'Başlat'; b.className = 'go'; }
-  else if (!paused) { b.textContent = 'Duraklat'; b.className = 'pause'; }
-  else { b.textContent = 'Devam'; b.className = 'go'; }
-}
-$('startBtn').onclick = () => {
-  ensureAudio(true); keepAwake();
-  if (!run) {
-    segs = buildSegs(); si = 0; run = true; paused = false; t0 = Date.now(); setEndOnce(); setDone(0);
-    applySeg(); beep(1200, 0.4);
-  } else if (!paused) {
-    paused = true; pausedLeftMs = Math.max(0, segEnd - Date.now()); pausedElapsed = Date.now() - t0;
-    beep(500, 0.2);
-  } else {
-    paused = false; segEnd = Date.now() + pausedLeftMs; t0 = Date.now() - pausedElapsed; lastShown = -1;
-    beep(900, 0.2);
-  }
-  setBtn();
-};
-$('resetBtn').onclick = () => {
-  run = false; paused = false; setBtn(); showIdle(); setCount(0); setDone(0); clearEnd();
+const MODE_LABEL = { bip: 'Ses: Bip', konus: 'Ses: Konuşma', kapali: 'Ses: Kapalı' };
+function showMode() { $('sndBtn').textContent = MODE_LABEL[S.mode]; }
+$('sndBtn').onclick = () => {
+  const order = ['bip', 'konus', 'kapali'];
+  S.mode = order[(order.indexOf(S.mode) + 1) % 3];
+  save(); showMode(); unlock();
+  if (S.mode === 'bip') tone(880, 0, .15, 'sine', .3);
+  if (S.mode === 'konus') say('Konuşma açık');
 };
 
-function logic() {
-  const now = Date.now();
-  if (run && !paused) {
-    const g = segs[si], leftMs = Math.max(0, segEnd - now), left = Math.ceil(leftMs / 1000);
-    const warn = left <= 3 && left >= 1;
-    setRing(leftMs / (g.dur * 1000), g.type === 'work' ? (warn ? '#ff453a' : '#30d158') : '#0a84ff');
-    if (left !== lastShown) {
-      lastShown = left; $('cd').textContent = left;
-      $('cd').classList.toggle('warn', warn);
-      if (warn) beep(g.type === 'work' ? 880 : 660, 0.14); // son 3 saniye: her saniye bip (egzersiz ve mola)
-    }
-    $('timer').textContent = fmt(now - t0);
-    if (now >= segEnd) {
-      if (g.type === 'work' && g.s === cfg.sets) setDone(g.m); // tum setler bitti: 1 set yapildi
-      if (si >= segs.length - 1) {
-        run = false; setRing(null);
-        $('cd').className = ''; $('cd').textContent = 'Bitti'; $('phase').textContent = 'Egzersiz bitti';
-        setBtn();
-        beep(1200, 0.4); setTimeout(() => beep(1500, 0.4), 450); setTimeout(() => beep(1800, 0.7), 900);
-      } else {
-        const ended = g.type;
-        si++; applySeg();
-        if (ended === 'work') beep(1200, 0.6);      // egzersiz bitti: uzun bip
-        else { beep(1500, 0.25); setTimeout(() => beep(1500, 0.25), 300); } // mola bitti: cift bip, basla
+/* ================= SESLE SAYMA: "say" ================= */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recog = null, listening = false, lastHeard = 0, tekrar = 0;
+function showListen() {
+  $('listenBtn').textContent = 'Dinle: ' + (listening ? 'açık' : 'kapalı') + (tekrar ? ' · ' + tekrar : '');
+  $('listenBtn').className = listening ? 'btn-go' : '';
+}
+function setTekrar(n) { tekrar = n; showListen(); }
+function startRecog() {
+  if (!SR) { listening = false; $('listenBtn').textContent = 'Dinleme desteklenmiyor'; return; }
+  try {
+    recog = new SR();
+    recog.lang = 'tr-TR'; recog.continuous = true; recog.interimResults = true;
+    recog.onresult = ev => {
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const t = ev.results[i][0].transcript.toLowerCase();
+        if (/(^|[^a-zçğıöşü])say($|[^a-zçğıöşü])/.test(t) && Date.now() - lastHeard > 1500) {
+          lastHeard = Date.now(); setTekrar(tekrar + 1);
+          if (S.mode === 'bip') tone(1000, 0, .1, 'sine', .3);
+          say(String(tekrar));
+        }
       }
+    };
+    recog.onend = () => { if (listening) setTimeout(() => { try { recog.start(); } catch (e) {} }, 300); };
+    recog.onerror = ev => { if (ev && (ev.error === 'not-allowed' || ev.error === 'service-not-allowed')) { listening = false; showListen(); } };
+    recog.start();
+  } catch (e) { listening = false; showListen(); }
+}
+$('listenBtn').onclick = () => {
+  listening = !listening; showListen();
+  if (listening) startRecog(); else { try { recog && recog.stop(); } catch (e) {} }
+};
+
+/* ================= EGZERSIZ OTURUMU ================= */
+// state: idle | run | pause | done     phase: work | rest
+let state = 'idle', phase = 'work', setsDone = 0;
+let phaseEnd = 0, phaseLeft = 0, phaseTotal = S.interval * 1000, lastShown = -1;
+let elapsedBase = 0, runSince = 0, finishedAt = 0;
+
+function startSession(now) {
+  state = 'run'; phase = 'work'; setsDone = 0;
+  phaseTotal = S.interval * 1000; phaseEnd = now + phaseTotal; lastShown = -1;
+  elapsedBase = 0; runSince = now;
+  snd.start(); say('Başla'); keepAwake();
+}
+function pauseSession(now) {
+  phaseLeft = Math.max(0, phaseEnd - now);
+  elapsedBase += now - runSince;
+  state = 'pause'; snd.pause();
+}
+function resumeSession(now) {
+  phaseEnd = now + phaseLeft;          // kalan sure yeniden hesaplanir, bitis saati buna gore kayar
+  runSince = now;
+  lastShown = Math.ceil(phaseLeft / 1000);
+  state = 'run'; snd.resume();
+}
+function resetSession() {
+  state = 'idle'; phase = 'work'; setsDone = 0; lastShown = -1; elapsedBase = 0;
+  phaseTotal = S.interval * 1000;
+  setTekrar(0); render(Date.now());
+}
+function finishSession(now) {
+  elapsedBase += now - runSince; finishedAt = now; state = 'done';
+  snd.finish(); say('Egzersiz bitti');
+}
+function phaseEnded(now, over) {
+  const base = over < 1000 ? phaseEnd : now;     // kucuk sapmayi biriktirmeden devam et
+  if (phase === 'work') {
+    setsDone++;
+    if (setsDone >= S.sets) { finishSession(now); return; }
+    snd.setDone(setsDone); say('Set ' + setsDone + ' tamam, mola');
+    phase = 'rest'; phaseTotal = S.rest * 1000;
+  } else {
+    snd.go(); say('Set ' + (setsDone + 1) + ', başla');
+    phase = 'work'; phaseTotal = S.interval * 1000;
+  }
+  phaseEnd = base + phaseTotal; lastShown = -1;
+}
+function tickSession(now) {
+  if (state === 'run') {
+    let left = phaseEnd - now;
+    if (left <= 0) {
+      phaseEnded(now, -left);
+      if (state !== 'run') { render(now); return; }
+      left = phaseEnd - now;
+    }
+    const secs = Math.ceil(left / 1000);
+    if (secs !== lastShown) {
+      lastShown = secs;
+      if (secs >= 1 && secs <= 3) { if (phase === 'work') snd.workTick(secs); else snd.restTick(secs); }
     }
   }
+  render(now);
 }
-function fmt(ms) { const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
-  return (h ? pad(h) + ':' : '') + pad(m) + ':' + pad(s % 60); }
-setInterval(logic, 100); // ekran gorunmese de calissin diye interval
 
-/* ---------- Saat ---------- */
-function frame() {
-  const d = new Date(), s = d.getSeconds() + d.getMilliseconds() / 1000, m = d.getMinutes() + s / 60, h = (d.getHours() % 12) + m / 60;
-  clock.ss.setAttribute('transform', 'rotate(' + s * 6 + ')');
-  clock.mm.setAttribute('transform', 'rotate(' + m * 6 + ')');
-  clock.hh.setAttribute('transform', 'rotate(' + h * 30 + ')');
-  $('digital').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
-  requestAnimationFrame(frame);
+// Planlanan toplam kalan sure (ms): su anki evre + sonraki tum calisma ve molalar
+function remainingTotal(leftMs) {
+  const N = S.sets, W = S.interval * 1000, R = S.rest * 1000;
+  if (state === 'idle') return N * W + (N - 1) * R;
+  if (state === 'done') return 0;
+  if (phase === 'work') return leftMs + (N - setsDone - 1) * (R + W);
+  return leftMs + (N - setsDone) * W + (N - setsDone - 1) * R;
 }
-frame();
 
-/* ---------- Ekran uyanik kalsin ---------- */
-let wakeLock = null;
+/* ================= EKRANI CIZ ================= */
+const cache = {};
+function setText(el, key, v) { if (cache[key] !== v) { cache[key] = v; el.textContent = v; } }
+function setCls(el, key, v) { if (cache[key] !== v) { cache[key] = v; el.className = v; } }
+function fmtDur(ms, floor) {
+  const s = Math.max(0, floor ? Math.floor(ms / 1000) : Math.ceil(ms / 1000));
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+  return h ? h + ':' + pad(m) + ':' + pad(x) : pad(m) + ':' + pad(x);
+}
+function hhmm(ms) { const d = new Date(ms); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function drawDots() {
+  const key = state + '|' + setsDone + '|' + S.sets;
+  if (cache.dots === key) return; cache.dots = key;
+  const box = $('dots'); box.textContent = '';
+  for (let i = 0; i < S.sets; i++) {
+    const d = document.createElement('i');
+    if (i < setsDone) d.className = 'done';
+    else if (i === setsDone && (state === 'run' || state === 'pause')) d.className = 'cur';
+    box.appendChild(d);
+  }
+}
+const cdEl = $('cd');
+function render(now) {
+  const active = state === 'run' || state === 'pause';
+  let left, label, secs = 0, cls = 'work';
+  if (state === 'idle')       { left = S.interval * 1000; label = 'Hazır'; secs = S.interval; }
+  else if (state === 'run')   { left = Math.max(0, phaseEnd - now); label = phase === 'work' ? 'Çalışma' : 'Mola'; secs = Math.ceil(left / 1000); }
+  else if (state === 'pause') { left = phaseLeft; label = 'Duraklatıldı · ' + (phase === 'work' ? 'Çalışma' : 'Mola'); secs = Math.ceil(left / 1000); }
+  else                        { left = 0; label = 'Egzersiz bitti'; }
+
+  if (state === 'done') cls = 'done';
+  else if (active && secs >= 1 && secs <= 3) cls = 'warn';
+  else if (active && phase === 'rest') cls = 'rest';
+
+  setText(cdEl, 'cd', state === 'done' ? 'Bitti' : String(secs));
+  setCls(cdEl, 'cdc', cls);
+  setText($('phase'), 'ph', label);
+  setText($('setLabel'), 'sl', state === 'idle' ? S.sets + ' set'
+    : state === 'done' ? S.sets + ' / ' + S.sets + ' set tamam'
+    : 'Set ' + (setsDone + 1) + ' / ' + S.sets);
+  drawDots();
+
+  const elapsed = state === 'run' ? elapsedBase + (now - runSince) : elapsedBase;
+  const rem = remainingTotal(left);
+  const endAt = state === 'done' ? finishedAt : now + rem;
+  setText($('stElapsed'), 'se', fmtDur(elapsed, true));
+  setText($('stLeft'), 'sk', fmtDur(rem, false));
+  setText($('stEnd'), 'sb', hhmm(endAt));
+
+  if (active) setRing(Math.min(1, Math.max(0, left / phaseTotal)), cls === 'warn' ? '#ffd60a' : phase === 'rest' ? '#64d2ff' : '#30d158');
+  else setRing(null);
+
+  setText($('mainBtn'), 'mb', state === 'run' ? 'Duraklat' : state === 'pause' ? 'Devam' : 'Başlat');
+  setCls($('mainBtn'), 'mbc', state === 'run' ? 'btn-pause' : 'btn-go');
+}
+
+/* ================= DUGMELER ================= */
+$('mainBtn').onclick = () => {
+  unlock(); keepAwake();
+  const now = Date.now();
+  if (state === 'idle' || state === 'done') startSession(now);
+  else if (state === 'run') pauseSession(now);
+  else resumeSession(now);
+  render(now);
+};
+$('resetBtn').onclick = () => { unlock(); resetSession(); };
+
+function showSettings() {
+  $('vInt').textContent = S.interval + ' sn';
+  $('vRest').textContent = S.rest + ' sn';
+  $('vSets').textContent = S.sets;
+}
+function bump(key, d, min, max) {
+  S[key] = Math.min(max, Math.max(min, S[key] + d));
+  save(); showSettings(); render(Date.now());
+}
+$('intMinus').onclick = () => bump('interval', -5, 5, 600);
+$('intPlus').onclick  = () => bump('interval', +5, 5, 600);
+$('restMinus').onclick = () => bump('rest', -5, 5, 600);
+$('restPlus').onclick  = () => bump('rest', +5, 5, 600);
+$('setMinus').onclick = () => bump('sets', -1, 1, 99);
+$('setPlus').onclick  = () => bump('sets', +1, 1, 99);
+
+let screen = 'home';
+function show(which) {
+  screen = which;
+  $('home').classList.toggle('on', which === 'home');
+  $('workout').classList.toggle('on', which === 'workout');
+  unlock(); keepAwake();
+}
+$('workoutBtn').onclick = () => show('workout');
+$('backBtn').onclick = () => show('home');
+
+/* ================= EKRAN UYANIK KALSIN ================= */
+let wl = null;
 async function keepAwake() {
-  try { if ('wakeLock' in navigator && (!wakeLock || wakeLock.released)) {
-    wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch (e) {}
+  try {
+    if ('wakeLock' in navigator && (!wl || wl.released)) {
+      wl = await navigator.wakeLock.request('screen');
+      wl.addEventListener('release', () => { wl = null; });
+    }
+  } catch (e) {}
 }
-keepAwake(); setInterval(keepAwake, 5000);
+setInterval(keepAwake, 5000);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    unlock(); keepAwake();
+    if (listening) { try { recog && recog.start(); } catch (e) {} }
+  }
+});
+window.addEventListener('pageshow', unlock);
+window.addEventListener('focus', unlock);
 
-showCfg();
-if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+/* ================= ANA DONGU (~30 kare/sn, pil icin) ================= */
+let lastFrame = 0;
+function frame(ts) {
+  requestAnimationFrame(frame);
+  if (ts - lastFrame < 30) return;
+  lastFrame = ts;
+  const now = Date.now(), d = new Date(now);
+  const s = d.getSeconds() + d.getMilliseconds() / 1000, m = d.getMinutes() + s / 60, h = (d.getHours() % 12) + m / 60;
+  setHands(screen === 'home' ? bigClock : miniClock, h, m, s);
+  tickSession(now);
+}
+
+/* ================= BASLANGIC ================= */
+showSettings(); showMode(); showListen(); show('home'); render(Date.now());
+requestAnimationFrame(frame);
+keepAwake();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+})();
 </script>
 </body>
 </html>
