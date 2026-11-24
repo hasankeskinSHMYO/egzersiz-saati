@@ -7,15 +7,15 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Egzersiz">
-<meta name="theme-color" content="#0b1220">
+<meta name="theme-color" content="#0a0f2e">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>Egzersiz Saati</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
-  html, body { margin: 0; height: 100%; background: #0b1220; background-image: linear-gradient(160deg, #0b1220 0%, #16213a 100%); color: #e8eefc; font-family: -apple-system, Helvetica, Arial, sans-serif; overflow: hidden; }
-  button { font-size: 3.6vmin; padding: 1.2vmin 2.6vmin; border-radius: 99px; border: 0; background: #1e293b; color: #fff; }
-  button.go { background: #0f766e; } button.stop { background: #9f1d36; }
+  html, body { margin: 0; height: 100%; background: #0a0f2e; background-image: linear-gradient(160deg, #0a0f2e 0%, #1c1b6b 100%); color: #f0f4ff; font-family: -apple-system, Helvetica, Arial, sans-serif; overflow: hidden; }
+  button { font-size: 3.6vmin; padding: 1.2vmin 2.6vmin; border-radius: 99px; border: 0; background: #2f3f8f; color: #fff; }
+  button.go { background: #0fae6e; } button.stop { background: #e11d48; }
   svg { width: 100%; height: 100%; }
   #app { position: absolute; inset: 0; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 2.5vmin;
     padding: env(safe-area-inset-top) max(2vw, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 5vmin) max(2vw, env(safe-area-inset-left)); }
@@ -23,26 +23,26 @@
   /* SOL: analog + dijital + planlanan bitis */
   #left { flex: none; display: flex; flex-direction: column; align-items: center; gap: .8vmin; }
   #clock { width: 46vmin; height: 46vmin; }
-  #wx { align-self: flex-start; text-align: left; font-size: 3.4vmin; line-height: 1.25; min-height: 8vmin; color: #cbd5e1; } #wx b { display: block; font-size: 4.6vmin; color: #fff; font-weight: 600; }
+  #wx { align-self: flex-start; text-align: left; font-size: 3.4vmin; line-height: 1.25; min-height: 8vmin; color: #c7d2fe; } #wx b { display: block; font-size: 4.6vmin; color: #fff; font-weight: 600; }
 
   /* ORTA */
   #mid { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1.2vmin; }
-  #cd { font-size: 19vmin; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; color: #5eead4; }
-  #cd.rest { color: #7dd3fc; } #cd.warn { color: #fb7185; } #cd.warnRest { color: #fbbf24; }
+  #cd { font-size: 19vmin; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; color: #19f0a0; }
+  #cd.rest { color: #35b6ff; } #cd.warn { color: #ff3d6e; } #cd.warnRest { color: #ffc21a; }
   #phase { font-size: 3.6vmin; opacity: .85; text-align: center; }
-  #audioWarn { display: none; background: #9f1d36; border-radius: 99px; padding: .6vmin 2.4vmin; font-size: 3vmin; }
-  #info { font-size: 4vmin; font-weight: 600; color: #fcd34d; }
+  #audioWarn { display: none; background: #e11d48; border-radius: 99px; padding: .6vmin 2.4vmin; font-size: 3vmin; }
+  #info { font-size: 4vmin; font-weight: 600; color: #ffd84d; }
   #btnRow { display: flex; gap: 2vmin; }
-  button.pause { background: #b45309; }
-  #stats { width: 100%; max-width: 46vw; background: rgba(148,163,184,.14); border-radius: 5vmin; padding: .8vmin 2vmin; display: flex; align-items: center; justify-content: space-around; gap: 1vmin; }
+  button.pause { background: #ea7a0a; }
+  #stats { width: 100%; max-width: 46vw; background: rgba(99,102,241,.30); border-radius: 5vmin; padding: .8vmin 2vmin; display: flex; align-items: center; justify-content: space-around; gap: 1vmin; }
   #stats .side { display: flex; flex-direction: column; align-items: center; min-width: 11vmin; }
   #stats .side small { font-size: 2.4vmin; opacity: .7; }
   #stats .side b { font-size: 16vmin; line-height: 1.1; font-variant-numeric: tabular-nums; }
-  #stats .side.small b { font-size: 8vmin; color: #5eead4; }
+  #stats .side.small b { font-size: 8vmin; color: #19f0a0; }
   #timerRow { display: flex; flex-wrap: wrap; justify-content: center; column-gap: 3.4vmin; row-gap: .4vmin; font-variant-numeric: tabular-nums; }
   #timerRow .tr { display: inline-flex; align-items: baseline; gap: 1vmin; white-space: nowrap; }
-  #timerRow small { font-size: 3vmin; opacity: .75; font-weight: 400; color: #cbd5e1; }
-  #timerRow b { font-size: 5vmin; font-weight: 600; color: #fcd34d; }
+  #timerRow small { font-size: 3vmin; opacity: .75; font-weight: 400; color: #c7d2fe; }
+  #timerRow b { font-size: 5vmin; font-weight: 600; color: #ffd84d; }
 
   /* SAG: ayarlar */
   #side { flex: none; display: flex; flex-direction: column; gap: .9vmin; max-height: 100%; overflow-y: auto; padding: 1vmin 0; }
@@ -106,24 +106,24 @@ function makeClock(container) {
   svg.setAttribute('viewBox', '-100 -100 200 200');
   const add = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag);
     for (const k in attrs) e.setAttribute(k, attrs[k]); (parent || svg).appendChild(e); return e; };
-  add('circle', {r: 96, fill: '#0f172a', stroke: '#334155', 'stroke-width': 2});
-  const ring = add('circle', {r: 98, fill: 'none', stroke: '#5eead4', 'stroke-width': 4, 'stroke-linecap': 'round',
+  add('circle', {r: 96, fill: '#101a45', stroke: '#3d56c8', 'stroke-width': 2});
+  const ring = add('circle', {r: 98, fill: 'none', stroke: '#19f0a0', 'stroke-width': 4, 'stroke-linecap': 'round',
     transform: 'rotate(-90)', 'stroke-dasharray': '0 1000', opacity: 0});
   for (let i = 0; i < 60; i++) {
     const a = i * 6 * Math.PI / 180, big = i % 5 === 0, r1 = big ? 80 : 86, r2 = 92;
-    add('line', {x1: Math.sin(a)*r1, y1: -Math.cos(a)*r1, x2: Math.sin(a)*r2, y2: -Math.cos(a)*r2, stroke: big ? '#fff' : '#64748b', 'stroke-width': big ? 2.4 : 1});
+    add('line', {x1: Math.sin(a)*r1, y1: -Math.cos(a)*r1, x2: Math.sin(a)*r2, y2: -Math.cos(a)*r2, stroke: big ? '#fff' : '#8da2ff', 'stroke-width': big ? 2.4 : 1});
   }
   for (let n = 1; n <= 12; n++) {
     const a = n * 30 * Math.PI / 180;
     const t = add('text', {x: Math.sin(a)*66, y: -Math.cos(a)*66, fill: '#fff', 'font-size': 13, 'text-anchor': 'middle', 'dominant-baseline': 'central'});
     t.textContent = n;
   }
-  const hh = add('line', {x1: 0, y1: 6, x2: 0, y2: -48, stroke: '#f1f5f9', 'stroke-width': 5, 'stroke-linecap': 'round'});
-  const mm = add('line', {x1: 0, y1: 8, x2: 0, y2: -72, stroke: '#f1f5f9', 'stroke-width': 3.5, 'stroke-linecap': 'round'});
+  const hh = add('line', {x1: 0, y1: 6, x2: 0, y2: -48, stroke: '#ffffff', 'stroke-width': 5, 'stroke-linecap': 'round'});
+  const mm = add('line', {x1: 0, y1: 8, x2: 0, y2: -72, stroke: '#ffffff', 'stroke-width': 3.5, 'stroke-linecap': 'round'});
   const ss = add('g', {});
-  add('line', {x1: 0, y1: 18, x2: 0, y2: -82, stroke: '#fb923c', 'stroke-width': 1.8, 'stroke-linecap': 'round'}, ss);
-  add('circle', {r: 3.5, fill: '#fb923c'}, ss);
-  add('circle', {r: 1.6, fill: '#0f172a'});
+  add('line', {x1: 0, y1: 18, x2: 0, y2: -82, stroke: '#ff7a1a', 'stroke-width': 1.8, 'stroke-linecap': 'round'}, ss);
+  add('circle', {r: 3.5, fill: '#ff7a1a'}, ss);
+  add('circle', {r: 1.6, fill: '#101a45'});
   container.appendChild(svg);
   return {hh, mm, ss, ring};
 }
@@ -206,18 +206,24 @@ $('soundBtn').onclick = () => {
 /* ---------- Konusma: varsayilan KAPALI (bip sesli); acilirsa kadin sesiyle ---------- */
 let voiceOn = false, trVoice = null;
 try { voiceOn = localStorage.getItem('egz-voice') === '1'; } catch (e) {}
+let voiceFemale = false;
 function pickVoice() {
   try {
     const vs = speechSynthesis.getVoices().filter(v => /^tr/i.test(v.lang));
-    trVoice = vs.find(v => /yelda|filiz|kadın|female/i.test(v.name)) || vs[0] || null; // Yelda: iPhone'un kadin Turkce sesi
+    const female = /emel|yelda|filiz|seda|zira|google|female|kad[ıi]n|natural/i, male = /tolga|cem\b|ahmet|kerem|erkek|\bmale\b/i;
+    // sira: bilinen kadin sesi -> erkek olmayan Turkce ses -> eldeki herhangi Turkce ses
+    trVoice = vs.find(v => female.test(v.name) && !male.test(v.name)) || vs.find(v => !male.test(v.name)) || vs[0] || null;
+    voiceFemale = !!trVoice && female.test(trVoice.name) && !male.test(trVoice.name);
   } catch (e) {}
 }
 try { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; } catch (e) {}
 function speak(text) {
   if (!voiceOn || !soundOn || !('speechSynthesis' in window)) return;
   try {
+    pickVoice(); // ses listesi gec yuklenebilir (Chrome/Edge)
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'tr-TR'; if (trVoice) u.voice = trVoice; u.rate = 1; u.volume = 1; u.pitch = 1.05;
+    u.lang = 'tr-TR'; if (trVoice) u.voice = trVoice; u.rate = 1; u.volume = 1;
+    u.pitch = voiceFemale ? 1.05 : 1.5; // kadin ses bulunamazsa tonu yukseltip kadina yaklastir
     u.onend = () => ensureAudio(false);
     speechSynthesis.speak(u);
   } catch (e) {}
@@ -333,7 +339,7 @@ function logic() {
   if (run && !paused) {
     const g = segs[si], leftMs = Math.max(0, segEnd - now), left = Math.ceil(leftMs / 1000);
     const warn = left <= 3 && left >= 1;
-    setRing(leftMs / (g.dur * 1000), g.type === 'work' ? (warn ? '#fb7185' : '#5eead4') : (warn ? '#fbbf24' : '#7dd3fc'));
+    setRing(leftMs / (g.dur * 1000), g.type === 'work' ? (warn ? '#ff3d6e' : '#19f0a0') : (warn ? '#ffc21a' : '#35b6ff'));
     if (left !== lastShown) {
       lastShown = left; $('cd').textContent = left;
       $('cd').className = ((g.type === 'work' ? '' : 'rest') + (warn ? (g.type === 'work' ? ' warn' : ' warnRest') : '')).trim();
